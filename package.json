@@ -1,11 +1,13 @@
 {
   "name": "minecraft-auth",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "debug": "nodemon example.ts"
+    "debug": "nodemon src/index.ts",
+    "build": "tsc",
+    "npm-publish": "tsc && npm publish"
   },
   "keywords": [],
   "author": "dommilosz",
@@ -13,9 +15,16 @@
   "dependencies": {
     "@types/node": "^15.0.2",
     "class-transformer": "^0.4.0",
-    "crypto": "^1.0.1",
+    "minecraft-auth": "^1.0.7",
     "node-fetch": "^2.6.1",
     "prompt": "^1.1.0",
     "reflect-metadata": "^0.1.13"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "devDependencies": {
+    "nodemon": "^2.0.7",
+    "typescript": "^4.2.4"
   }
 }

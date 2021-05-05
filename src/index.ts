@@ -2,6 +2,7 @@ import {XHR_GET, XHR_POST} from "./httpMethods";
 import 'reflect-metadata';
 import {plainToClass} from "class-transformer";
 import crypto from "crypto";
+import MCProfileResponse = MojangAuth.MCProfileResponse;
 
 export module MicrosoftAuth {
     export let appID;
@@ -337,6 +338,7 @@ export class account {
     uuid: string;
     username: string;
     type: string;
+    profile:MCProfileResponse;
 
     constructor(token: string, type: any) {
         this.accessToken = token;
@@ -360,6 +362,7 @@ export class account {
         let profile = await MojangAuth.getProfile(this.accessToken);
         this.username = profile.name;
         this.uuid = profile.id;
+        this.profile = profile;
         return profile;
     }
 }
