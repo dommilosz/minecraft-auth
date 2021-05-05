@@ -1,4 +1,4 @@
-#Minecraft-auth package
+# Minecraft-auth package
 Minecraft-auth is a package to authenticate and get minecraft access tokens.
 
 Authentication Types:
@@ -6,7 +6,7 @@ Authentication Types:
 * Microsoft Authentication - new Microsoft oauth authentication to login to new accounts / migrated to microsoft
 * Cracked Authentication - non premium offline mode authentication. Requires only username.
 
-###Error handling:
+### Error handling:
 All authentication errors are thrown by using AuthenticationError class.
 ```javascript
 message: string;
@@ -14,7 +14,7 @@ error: string;
 additionalInfo: string 
 ```
 
-###Authentication Examples: 
+### Authentication Examples: 
 * Mojang Authentication:
 ```javascript
 var minecraftAuth = require("minecraft-auth")
@@ -63,7 +63,7 @@ var minecraftAuth = require("minecraft-auth")
 let account = new minecraftAuth.crackedAccount("username");
 ```
 
-###Usage example
+### Usage example
 ```javascript
 await authenticate(); //function from above examples
         
@@ -76,7 +76,7 @@ console.log(account.profile)              //User profile - skins, capes, uuid, u
 console.log(account.profile.skins[0].url) //URL of the 1st skin.
 ```
 
-###accountsStorage:
+### accountsStorage:
 accountsStorage is a storage for your accounts. 
 ###### Adding accounts:
 You can add new account with `accountsStorage::addAccount(account)`
