@@ -6,6 +6,10 @@ Authentication Types:
 * Microsoft Authentication - new Microsoft oauth authentication to login to new accounts / migrated to microsoft
 * Cracked Authentication - non premium offline mode authentication. Requires only username.
 
+Mojang API:
+
+Package contains MojangApi class which can be used to fetch other users skins, uuids, check server status and more.
+
 ### Error handling:
 All authentication errors are thrown by using AuthenticationError class.
 ```javascript
@@ -80,6 +84,9 @@ console.log(account.profile.skins[0].url) //URL of the 1st skin.
 accountsStorage is a storage for your accounts. 
 ###### Adding accounts:
 You can add new account with `accountsStorage::addAccount(account)`
+###### Removing accounts:
+You can add new account with `accountsStorage::removeAccount(account)`
+
 ###### Getting accounts:
 You can get accounts with:
 * `getAccount(index)`

@@ -1,6 +1,6 @@
 {
   "name": "minecraft-auth",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -12,6 +12,9 @@
   "keywords": [],
   "author": "dommilosz",
   "license": "ISC",
+  "repository": {
+    "url": "https://github.com/dommilosz/minecraft-auth.git"
+  },
   "dependencies": {
     "@types/node": "^15.0.2",
     "atob": "^2.1.2",
