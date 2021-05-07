@@ -351,14 +351,16 @@ export module MojangAPI {
             "url": url
         }
         let Rurl = "https://api.minecraftservices.com/minecraft/profile/skins";
-        let response = await XHR_POST_BEARER(Rurl,JSON.stringify(body), token,{"Content-Type": "application/json"});
-        if(response.length>0)throw response;
+        let response = await XHR_POST_BEARER(Rurl, JSON.stringify(body), token, {"Content-Type": "application/json"});
+        if (response.length > 0) throw response;
     }
-    export async function resetSkin(uuid,token) {
+
+    export async function resetSkin(uuid, token) {
         let url = `https://api.mojang.com/user/profile/${uuid}/skin`;
         let response = await XHR_DELETE_BEARER(url, token);
-        if(response.length>0)throw response;
+        if (response.length > 0) throw response;
     }
+
     export async function checkOwnership(token, profileResp?: MCProfileResponse) {
         if (!profileResp) {
             profileResp = await getProfile(token);
@@ -501,20 +503,22 @@ export class AuthenticationError {
     }
 }
 
-export async function XHR_GET_BEARER(url, token,headers?:{}) {
-    if(!headers) headers={};
-    headers["Authorization"]= `Bearer ${token}`
+export async function XHR_GET_BEARER(url, token, headers?: {}) {
+    if (!headers) headers = {};
+    headers["Authorization"] = `Bearer ${token}`
     return XHR_GET(url, headers)
 }
-export async function XHR_DELETE_BEARER(url, token,headers?:{}) {
-    if(!headers) headers={};
-    headers["Authorization"]= `Bearer ${token}`
+
+export async function XHR_DELETE_BEARER(url, token, headers?: {}) {
+    if (!headers) headers = {};
+    headers["Authorization"] = `Bearer ${token}`
     return XHR_DELETE(url, headers)
 }
-export async function XHR_POST_BEARER(url,body:string, token,headers?:{}) {
-    if(!headers) headers={};
-    headers["Authorization"]= `Bearer ${token}`
-    return XHR_POST(url,body, headers)
+
+export async function XHR_POST_BEARER(url, body: string, token, headers?: {}) {
+    if (!headers) headers = {};
+    headers["Authorization"] = `Bearer ${token}`
+    return XHR_POST(url, body, headers)
 }
 
 export class account {
@@ -531,18 +535,18 @@ export class account {
     }
 
     async checkValidToken() {
-        if(!this.accessToken)return false;
+        if (!this.accessToken) return false;
         return await MojangAuth.validateToken(this.accessToken);
     }
 
     async checkOwnership() {
-        if(!this.accessToken)return false;
+        if (!this.accessToken) return false;
         this.ownership = await MojangAPI.checkOwnership(this.accessToken);
         return this.ownership;
     }
 
     async getProfile() {
-        if(!this.accessToken)return undefined;
+        if (!this.accessToken) return undefined;
         if (this.ownership == undefined) {
             await this.checkOwnership();
             return this.getProfile()
@@ -553,16 +557,19 @@ export class account {
         this.profile = profile;
         return profile;
     }
-    async changeSkin(url: any, variant: "slim"|"classic"){
-        if(!this.accessToken)return;
+
+    async changeSkin(url: any, variant: "slim" | "classic") {
+        if (!this.accessToken) return;
         await MojangAPI.changeSkin(url, variant, this.accessToken)
     }
-    async checkNameAvailability(name){
-        if(!this.accessToken)return false;
+
+    async checkNameAvailability(name) {
+        if (!this.accessToken) return false;
         return await MojangAPI.nameAvailability(name, this.accessToken)
     }
-    async canChangeName(){
-        if(!this.accessToken)return false;
+
+    async canChangeName() {
+        if (!this.accessToken) return false;
         return await MojangAPI.nameChangeInfo(this.accessToken)
     }
 }
@@ -674,6 +681,16 @@ export class accountsStorage {
 
     addAccount(account: account) {
         this.accountList.push(account);
+    }
+
+    deleteAccount(account: account) {
+        for (let i = 0; i < this.accountList.length; i++) {
+            if (this.accountList[i] === account) {
+                this.accountList.splice(i, 1);
+                i--;
+            }
+        }
+
     }
 
     deserialize() {
