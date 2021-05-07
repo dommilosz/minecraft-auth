@@ -85,7 +85,7 @@ accountsStorage is a storage for your accounts.
 ###### Adding accounts:
 You can add new account with `accountsStorage::addAccount(account)`
 ###### Removing accounts:
-You can add new account with `accountsStorage::removeAccount(account)`
+You can remove account with `accountsStorage::removeAccount(account)`
 
 ###### Getting accounts:
 You can get accounts with:

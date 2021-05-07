@@ -1,4 +1,4 @@
-import {XHR_DELETE, XHR_GET, XHR_POST} from "./httpMethods";
+import {XHR_CUSTOM, XHR_GET, XHR_POST} from "./httpMethods";
 import 'reflect-metadata';
 import {plainToClass} from "class-transformer";
 import crypto from "crypto";
@@ -357,7 +357,7 @@ export module MojangAPI {
 
     export async function resetSkin(uuid, token) {
         let url = `https://api.mojang.com/user/profile/${uuid}/skin`;
-        let response = await XHR_DELETE_BEARER(url, token);
+        let response = await XHR_CUSTOM_BEARER("delete",url, token);
         if (response.length > 0) throw response;
     }
 
@@ -503,24 +503,6 @@ export class AuthenticationError {
     }
 }
 
-export async function XHR_GET_BEARER(url, token, headers?: {}) {
-    if (!headers) headers = {};
-    headers["Authorization"] = `Bearer ${token}`
-    return XHR_GET(url, headers)
-}
-
-export async function XHR_DELETE_BEARER(url, token, headers?: {}) {
-    if (!headers) headers = {};
-    headers["Authorization"] = `Bearer ${token}`
-    return XHR_DELETE(url, headers)
-}
-
-export async function XHR_POST_BEARER(url, body: string, token, headers?: {}) {
-    if (!headers) headers = {};
-    headers["Authorization"] = `Bearer ${token}`
-    return XHR_POST(url, body, headers)
-}
-
 export class account {
     accessToken: string;
     ownership: boolean;
@@ -570,7 +552,7 @@ export class account {
 
     async canChangeName() {
         if (!this.accessToken) return false;
-        return await MojangAPI.nameChangeInfo(this.accessToken)
+        return (await MojangAPI.nameChangeInfo(this.accessToken)).nameChangeAllowed
     }
 }
 
@@ -714,4 +696,17 @@ export class accountsStorage {
         })
         return accStorage;
     }
+}
+
+export async function XHR_GET_BEARER(url,token,headers?:{}) {
+    return await XHR_CUSTOM_BEARER("get",url,token,undefined,headers);
+}
+export async function XHR_CUSTOM_BEARER(method,url,token,body?:string,headers?:{}) {
+    if (!headers) headers = {};
+    headers["Authorization"] = `Bearer ${token}`
+    return XHR_CUSTOM(method,url,body,headers);
+}
+
+export async function XHR_POST_BEARER(url,data:string,token,headers?:{}){
+    return await XHR_CUSTOM_BEARER("post",url,token,data,headers);
 }

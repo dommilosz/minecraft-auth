@@ -1,25 +1,20 @@
 const fetch = require('node-fetch');
 
 export async function XHR_GET(url,headers?:{}) {
-    let res = await fetch(url, {
-        method: 'get',
-        headers: headers,
-    });
-    return await res.text();
+    return await XHR_CUSTOM("get",url,undefined,headers);
 }
-export async function XHR_DELETE(url,headers?:{}) {
-    let res = await fetch(url, {
-        method: 'delete',
+export async function XHR_CUSTOM(method,url,body?:string,headers?:{}) {
+    let req = {
+        method: method,
         headers: headers,
-    });
+    }
+    if(body)req["body"] = body;
+    let res = await fetch(url,req);
+
     return await res.text();
 }
 
+
 export async function XHR_POST(url,data:string,headers?:{}){
-    let res = await fetch(url, {
-        method: 'post',
-        body:    data,
-        headers: headers,
-    });
-    return await res.text();
+    return await XHR_CUSTOM("post",url,data,headers);
 }
