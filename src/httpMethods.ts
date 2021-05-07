@@ -7,6 +7,13 @@ export async function XHR_GET(url,headers?:{}) {
     });
     return await res.text();
 }
+export async function XHR_DELETE(url,headers?:{}) {
+    let res = await fetch(url, {
+        method: 'delete',
+        headers: headers,
+    });
+    return await res.text();
+}
 
 export async function XHR_POST(url,data:string,headers?:{}){
     let res = await fetch(url, {
