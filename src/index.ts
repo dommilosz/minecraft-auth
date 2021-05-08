@@ -357,7 +357,7 @@ export module MojangAPI {
 
     export async function resetSkin(uuid, token) {
         let url = `https://api.mojang.com/user/profile/${uuid}/skin`;
-        let response = await XHR_CUSTOM_BEARER("delete",url, token);
+        let response = await XHR_CUSTOM_BEARER("delete", url, token);
         if (response.length > 0) throw response;
     }
 
@@ -565,7 +565,10 @@ export class mojangAccount extends account {
         super(undefined, "mojang");
     }
 
-    async Login(username: string, password: string, saveCredentials?) {
+    async Login(username?: string, password?: string, saveCredentials?) {
+        if(!username)username=this.login_username;
+        if(!password)password=this.login_password;
+        if(!username||!password) throw new AuthenticationError("Username or password not provided","Username or password not provided","");
         let resp = await MojangAuth.authenticate(username, password);
         this.clientToken = resp.clientToken;
         this.accessToken = resp.accessToken;
@@ -588,7 +591,15 @@ export class mojangAccount extends account {
         if (await this.checkValidToken()) {
 
         } else {
-            await this.refresh();
+            if(this.login_username&&this.login_password){
+                try {
+                    await this.refresh();
+                } catch (e) {
+                    await this.Login();
+                }
+            }else{
+                await this.refresh();
+            }
         }
     }
 }
@@ -626,9 +637,14 @@ export class microsoftAccount extends account {
 export class crackedAccount extends account {
     constructor(username) {
         super(undefined, "cracked");
+        this.ownership = false;
+        this.setUsername(username);
+    }
+
+    setUsername(username) {
+        if (!username) return;
         this.username = username;
         this.uuid = CrackedAuth.uuid(username);
-        this.ownership = false;
     }
 }
 
@@ -644,21 +660,23 @@ export class accountsStorage {
     }
 
     getAccountByUUID(uuid): any {
+        let acc;
         this.accountList.forEach((el: account) => {
             if (el.uuid === uuid) {
-                return el;
+                acc = el;
             }
         })
-        return undefined;
+        return acc;
     }
 
     getAccountByName(name): any {
+        let acc;
         this.accountList.forEach((el: account) => {
             if (el.username === name) {
-                return el;
+                acc = el;
             }
         })
-        return undefined;
+        return acc;
     }
 
     addAccount(account: account) {
@@ -698,15 +716,16 @@ export class accountsStorage {
     }
 }
 
-export async function XHR_GET_BEARER(url,token,headers?:{}) {
-    return await XHR_CUSTOM_BEARER("get",url,token,undefined,headers);
-}
-export async function XHR_CUSTOM_BEARER(method,url,token,body?:string,headers?:{}) {
-    if (!headers) headers = {};
-    headers["Authorization"] = `Bearer ${token}`
-    return XHR_CUSTOM(method,url,body,headers);
+export async function XHR_GET_BEARER(url, token, headers?: {}) {
+    return await XHR_CUSTOM_BEARER("get", url, token, undefined, headers);
 }
 
-export async function XHR_POST_BEARER(url,data:string,token,headers?:{}){
-    return await XHR_CUSTOM_BEARER("post",url,token,data,headers);
+export async function XHR_CUSTOM_BEARER(method, url, token, body?: string, headers?: {}) {
+    if (!headers) headers = {};
+    headers["Authorization"] = `Bearer ${token}`
+    return XHR_CUSTOM(method, url, body, headers);
+}
+
+export async function XHR_POST_BEARER(url, data: string, token, headers?: {}) {
+    return await XHR_CUSTOM_BEARER("post", url, token, data, headers);
 }

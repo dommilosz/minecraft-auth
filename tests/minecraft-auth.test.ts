@@ -1,4 +1,4 @@
-import {crackedAccount, CrackedAuth, mojangAccount, XHR_GET_BEARER} from "../src";
+import {accountsStorage, crackedAccount, CrackedAuth, mojangAccount, XHR_GET_BEARER} from "../src";
 import {XHR_CUSTOM, XHR_GET, XHR_POST} from "../src/httpMethods";
 import {mocked} from "ts-jest/utils";
 
@@ -19,6 +19,116 @@ test("cracked-auth", async () => {
     expect(await account.getProfile()).toBeUndefined();
     expect(account.ownership).toBeFalsy()
     expect(await account.canChangeName()).toBeFalsy()
+})
+
+test("accountsStorage-addAccount",async()=>{
+    let store = new accountsStorage();
+    let acc1 = new mojangAccount();
+    acc1.accessToken = accessToken;
+    let acc2 = new crackedAccount(username);
+    let acc3 = new crackedAccount("username2");
+    store.addAccount(acc1);
+    store.addAccount(acc2);
+    store.addAccount(acc3);
+
+    expect(store.accountList).toBeDefined();
+    expect(store.accountList).toHaveLength(3);
+    expect(store.accountList[0]).toStrictEqual(acc1);
+    expect(store.accountList[1]).toStrictEqual(acc2);
+    expect(store.accountList[2]).toStrictEqual(acc3);
+})
+
+test("accountsStorage-removeAccount",async()=>{
+    let store = new accountsStorage();
+    let acc1 = new mojangAccount();
+    acc1.accessToken = accessToken;
+    let acc2 = new crackedAccount(username);
+    let acc3 = new crackedAccount("username2");
+    store.addAccount(acc1);
+    store.addAccount(acc2);
+    store.addAccount(acc3);
+
+    store.deleteAccount(acc2);
+
+    expect(store.accountList).toBeDefined();
+    expect(store.accountList).toHaveLength(2);
+    expect(store.accountList[0]).toStrictEqual(acc1);
+    expect(store.accountList[1]).toStrictEqual(acc3);
+})
+
+test("accountsStorage-getByUUID",async()=>{
+    let store = new accountsStorage();
+    let acc1 = new mojangAccount();
+    acc1.accessToken = accessToken;
+    let acc2 = new crackedAccount(username);
+    let acc3 = new crackedAccount("username2");
+    store.addAccount(acc1);
+    store.addAccount(acc2);
+    store.addAccount(acc3);
+
+    let acc4 = store.getAccountByUUID(acc2.uuid);
+
+    expect(store.accountList).toBeDefined();
+    expect(store.accountList).toHaveLength(3);
+    expect(store.accountList[0]).toStrictEqual(acc1);
+    expect(store.accountList[1]).toStrictEqual(acc2);
+    expect(store.accountList[2]).toStrictEqual(acc3);
+    expect(acc4).toStrictEqual(acc2);
+})
+
+test("accountsStorage-getByName",async()=>{
+    let store = new accountsStorage();
+    let acc1 = new mojangAccount();
+    acc1.accessToken = accessToken;
+    let acc2 = new crackedAccount(username);
+    let acc3 = new crackedAccount("username2");
+    store.addAccount(acc1);
+    store.addAccount(acc2);
+    store.addAccount(acc3);
+
+    let acc4 = store.getAccountByName(acc2.username);
+
+    expect(store.accountList).toBeDefined();
+    expect(store.accountList).toHaveLength(3);
+    expect(store.accountList[0]).toStrictEqual(acc1);
+    expect(store.accountList[1]).toStrictEqual(acc2);
+    expect(store.accountList[2]).toStrictEqual(acc3);
+    expect(acc4).toStrictEqual(acc2);
+})
+
+test("accountsStorage-getById",async()=>{
+    let store = new accountsStorage();
+    let acc1 = new mojangAccount();
+    acc1.accessToken = accessToken;
+    let acc2 = new crackedAccount(username);
+    let acc3 = new crackedAccount("username2");
+    store.addAccount(acc1);
+    store.addAccount(acc2);
+    store.addAccount(acc3);
+
+    let acc4 = store.getAccount(1);
+
+    expect(store.accountList).toBeDefined();
+    expect(store.accountList).toHaveLength(3);
+    expect(store.accountList[0]).toStrictEqual(acc1);
+    expect(store.accountList[1]).toStrictEqual(acc2);
+    expect(store.accountList[2]).toStrictEqual(acc3);
+    expect(acc4).toStrictEqual(acc2);
+})
+
+test("accountsStorage-serialization",async()=>{
+    let store = new accountsStorage();
+    let acc1 = new mojangAccount();
+    acc1.accessToken = accessToken;
+    let acc2 = new crackedAccount(username);
+    let acc3 = new crackedAccount("username2");
+    store.addAccount(acc1);
+    store.addAccount(acc2);
+    store.addAccount(acc3);
+
+    let string = store.deserialize();
+    let store2 = accountsStorage.serialize(string);
+    expect(store.accountList).toStrictEqual(store2.accountList);
 })
 
 test("mojang-auth", async () => {
