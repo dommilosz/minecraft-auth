@@ -510,6 +510,7 @@ export class account {
     username: string;
     type: string;
     profile: MojangAPI.MCProfileResponse;
+    properties:any = {};
 
     constructor(token: string, type: any) {
         this.accessToken = token;
