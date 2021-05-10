@@ -693,11 +693,11 @@ export class accountsStorage {
 
     }
 
-    deserialize() {
+    serialize() {
         return JSON.stringify(this.accountList);
     }
 
-    static serialize(data: string): accountsStorage {
+    static deserialize(data: string): accountsStorage {
         let accounts = JSON.parse(data);
         let accStorage = new accountsStorage();
         accounts.forEach(el => {

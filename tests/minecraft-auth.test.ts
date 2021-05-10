@@ -126,8 +126,8 @@ test("accountsStorage-serialization",async()=>{
     store.addAccount(acc2);
     store.addAccount(acc3);
 
-    let string = store.deserialize();
-    let store2 = accountsStorage.serialize(string);
+    let string = store.serialize();
+    let store2 = accountsStorage.deserialize(string);
     expect(store.accountList).toStrictEqual(store2.accountList);
 })
 
