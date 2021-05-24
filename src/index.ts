@@ -533,7 +533,7 @@ export class account {
 
     async getProfile() {
         if (!this.accessToken) return undefined;
-        if (this.ownership == undefined) {
+        if (!this.ownership) {
             await this.checkOwnership();
             if(!this.ownership)throw new OwnershipError("User don't have minecraft on his account!");
             return this.getProfile()
