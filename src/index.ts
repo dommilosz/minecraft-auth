@@ -1,8 +1,8 @@
-import {XHR_CUSTOM, XHR_GET, XHR_POST} from "./httpMethods";
 import 'reflect-metadata';
 import {plainToClass} from "class-transformer";
 import crypto from "crypto";
 import atob from "atob";
+import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
 
 export module MicrosoftAuth {
     export let appID;
@@ -31,7 +31,7 @@ export module MicrosoftAuth {
     export async function getToken(authCode) {
         let url = "https://login.live.com/oauth20_token.srf";
         let body = `client_id=${compiledID}&client_secret=${compiledSecret}&code=${authCode}&grant_type=authorization_code&redirect_uri=${compiledUrl}`
-        let response = await XHR_POST(url, body, {"Content-Type": "application/x-www-form-urlencoded"})
+        let response = await HttpPost(url, body, {"Content-Type": "application/x-www-form-urlencoded"})
 
         let jsonResponse: TokenResponse = JSON.parse(response);
         if (jsonResponse.error) {
@@ -44,7 +44,7 @@ export module MicrosoftAuth {
     export async function getTokenRefresh(refreshToken) {
         let url = "https://login.live.com/oauth20_token.srf";
         let body = `client_id=${compiledID}&client_secret=${compiledSecret}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${compiledUrl}`
-        let response = await XHR_POST(url, body, {"Content-Type": "application/x-www-form-urlencoded"})
+        let response = await HttpPost(url, body, {"Content-Type": "application/x-www-form-urlencoded"})
 
         let jsonResponse: TokenResponse = JSON.parse(response);
         if (jsonResponse.error) {
@@ -64,7 +64,7 @@ export module MicrosoftAuth {
             "RelyingParty": "http://auth.xboxlive.com",
             "TokenType": "JWT"
         }
-        let response = await XHR_POST("https://user.auth.xboxlive.com/user/authenticate", JSON.stringify(body), {
+        let response = await HttpPost("https://user.auth.xboxlive.com/user/authenticate", JSON.stringify(body), {
             "Content-Type": "application/json",
             "Accept": "application/json"
         })
@@ -85,7 +85,7 @@ export module MicrosoftAuth {
             "RelyingParty": "rp://api.minecraftservices.com/",
             "TokenType": "JWT"
         }
-        let response = await XHR_POST("https://xsts.auth.xboxlive.com/xsts/authorize", JSON.stringify(body), {
+        let response = await HttpPost("https://xsts.auth.xboxlive.com/xsts/authorize", JSON.stringify(body), {
             "Content-Type": "application/json",
             "Accept": "application/json"
         })
@@ -103,7 +103,7 @@ export module MicrosoftAuth {
         let body = {
             "identityToken": `XBL3.0 x=${uhs};${xstsToken}`
         }
-        let response = await XHR_POST("https://api.minecraftservices.com/authentication/login_with_xbox", JSON.stringify(body), {
+        let response = await HttpPost("https://api.minecraftservices.com/authentication/login_with_xbox", JSON.stringify(body), {
             "Content-Type": "application/json",
             "Accept": "application/json"
         })
@@ -195,7 +195,7 @@ export module MojangAuth {
         if (clientToken) {
             body.clientToken = clientToken;
         }
-        let response = await XHR_POST(url, JSON.stringify(body), {"Content-Type": "application/json"})
+        let response = await HttpPost(url, JSON.stringify(body), {"Content-Type": "application/json"})
         let jsonResponse: MCAuthResponse = JSON.parse(response);
         if (jsonResponse.error) {
             throw new AuthenticationError(jsonResponse.error, jsonResponse.errorMessage, jsonResponse.cause)
@@ -210,7 +210,7 @@ export module MojangAuth {
             "clientToken": `${clientToken}`,
             "requestUser": true
         }
-        let response = await XHR_POST(url, JSON.stringify(body), {"Content-Type": "application/json"})
+        let response = await HttpPost(url, JSON.stringify(body), {"Content-Type": "application/json"})
         let jsonResponse: MCAuthResponse = JSON.parse(response);
         if (jsonResponse.error) {
             throw new AuthenticationError(jsonResponse.error, jsonResponse.errorMessage, jsonResponse.cause)
@@ -223,7 +223,7 @@ export module MojangAuth {
         let body = {
             "accessToken": `${token}`,
         }
-        let response = await XHR_POST(url, JSON.stringify(body), {"Content-Type": "application/json"})
+        let response = await HttpPost(url, JSON.stringify(body), {"Content-Type": "application/json"})
         if (response.length < 1) return true;
         let jsonResponse: MCErrorResponse = JSON.parse(response);
         if (jsonResponse.error) {
@@ -281,28 +281,28 @@ export module CrackedAuth {
 export module MojangAPI {
     export async function getStatus() {
         let url = "https://status.mojang.com/check";
-        let response = await XHR_GET(url);
+        let response = await HttpGet(url);
         let jsonResponse: StatusResponse = JSON.parse(response);
         return jsonResponse;
     }
 
     export async function usernameToUUID(username: string) {
         let url = `https://api.mojang.com/users/profiles/minecraft/${username}`;
-        let response = await XHR_GET(url);
+        let response = await HttpGet(url);
         let jsonResponse: UsernameToUUIDResponse = JSON.parse(response);
         return jsonResponse;
     }
 
     export async function nameHistory(uuid: string) {
         let url = `https://api.mojang.com/user/profiles/${uuid}/names`;
-        let response = await XHR_GET(url);
+        let response = await HttpGet(url);
         let jsonResponse: NameHistoryResponse = JSON.parse(response);
         return jsonResponse;
     }
 
     export async function getProfileByUUID(uuid: string) {
         let url = `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`;
-        let response = await XHR_GET(url);
+        let response = await HttpGet(url);
         let jsonResponseEncoded: ProfileResponse = JSON.parse(response);
         let decodedValue: DecodedTextures = JSON.parse(atob(jsonResponseEncoded.properties[0].value));
         // @ts-ignore
@@ -313,7 +313,7 @@ export module MojangAPI {
 
     export async function getBlockedServers() {
         let url = "https://sessionserver.mojang.com/blockedservers";
-        let response: string = await XHR_GET(url);
+        let response: string = await HttpGet(url);
         return response.split('\n');
     }
 
@@ -325,21 +325,21 @@ export module MojangAPI {
         let body = {
             "metricKeys": options
         }
-        let response = await XHR_POST(url, JSON.stringify(body), {"Content-Type": "application/json"})
+        let response = await HttpPost(url, JSON.stringify(body), {"Content-Type": "application/json"})
         let jsonResponse: StatisticsResponse = JSON.parse(response);
         return jsonResponse;
     }
 
     export async function nameChangeInfo(token) {
         let url = "https://api.minecraftservices.com/minecraft/profile/namechange";
-        let response = await XHR_GET_BEARER(url, token);
+        let response = await HttpGet_BEARER(url, token);
         let jsonResponse: NameChangeInfoResponse = JSON.parse(response);
         return jsonResponse;
     }
 
     export async function nameAvailability(name, token) {
         let url = `https://api.minecraftservices.com/minecraft/profile/name/${name}/available`;
-        let response = await XHR_GET_BEARER(url, token);
+        let response = await HttpGet_BEARER(url, token);
         let jsonResponse: NameAvailabilityResponse = JSON.parse(response);
         return jsonResponse.status == "AVAILABLE";
 
@@ -351,13 +351,13 @@ export module MojangAPI {
             "url": url
         }
         let Rurl = "https://api.minecraftservices.com/minecraft/profile/skins";
-        let response = await XHR_POST_BEARER(Rurl, JSON.stringify(body), token, {"Content-Type": "application/json"});
+        let response = await HttpPost_BEARER(Rurl, JSON.stringify(body), token, {"Content-Type": "application/json"});
         if (response.length > 0) throw response;
     }
 
     export async function resetSkin(uuid, token) {
         let url = `https://api.mojang.com/user/profile/${uuid}/skin`;
-        let response = await XHR_CUSTOM_BEARER("delete", url, token);
+        let response = await HttpCustom_BEARER("delete", url, token);
         if (response.length > 0) throw response;
     }
 
@@ -365,11 +365,11 @@ export module MojangAPI {
         if (!profileResp) {
             profileResp = await getProfile(token);
         }
-        if (profileResp.id) return true;
+        return !!profileResp.id;
     }
 
     export async function getProfile(token) {
-        let response = await XHR_GET_BEARER("https://api.minecraftservices.com/minecraft/profile", token);
+        let response = await HttpGet_BEARER("https://api.minecraftservices.com/minecraft/profile", token);
         let jsonResponse: MCProfileResponse = JSON.parse(response);
         return jsonResponse;
     }
@@ -491,15 +491,18 @@ export module MojangAPI {
     }
 }
 
-export class AuthenticationError {
-    message: string;
-    error: string;
+export class AuthenticationError extends Error{
     additionalInfo: string
 
     constructor(_error, _message, _additionalInfo) {
-        this.message = _message;
-        this.error = _error;
+        super(_message);
+        this.name = _error;
         this.additionalInfo = _additionalInfo;
+    }
+}
+export class OwnershipError extends Error{
+    constructor(_error) {
+        super(_error);
     }
 }
 
@@ -532,6 +535,7 @@ export class account {
         if (!this.accessToken) return undefined;
         if (this.ownership == undefined) {
             await this.checkOwnership();
+            if(!this.ownership)throw new OwnershipError("User don't have minecraft on his account!");
             return this.getProfile()
         }
         let profile = await MojangAPI.getProfile(this.accessToken);
@@ -543,7 +547,8 @@ export class account {
 
     async changeSkin(url: any, variant: "slim" | "classic") {
         if (!this.accessToken) return;
-        await MojangAPI.changeSkin(url, variant, this.accessToken)
+        await MojangAPI.changeSkin(url, variant, this.accessToken);
+        return true;
     }
 
     async checkNameAvailability(name) {
@@ -580,26 +585,31 @@ export class mojangAccount extends account {
             this.login_username = username;
             this.login_password = password;
         }
+        return this.accessToken;
     }
 
     async refresh() {
         let resp = await MojangAuth.refresh(this.accessToken, this.clientToken);
         this.clientToken = resp.clientToken;
         this.accessToken = resp.accessToken;
+        return this.accessToken;
     }
 
     async use() {
         if (await this.checkValidToken()) {
-
+            return this.accessToken;
         } else {
             if(this.login_username&&this.login_password){
                 try {
                     await this.refresh();
+                    return this.accessToken;
                 } catch (e) {
                     await this.Login();
+                    return this.accessToken;
                 }
             }else{
                 await this.refresh();
+                return this.accessToken;
             }
         }
     }
@@ -617,6 +627,7 @@ export class microsoftAccount extends account {
         let resp = await MicrosoftAuth.authFlowRefresh(this.refreshToken);
         this.refreshToken = resp.refresh_token;
         this.accessToken = resp.access_token;
+        return this.accessToken;
     }
 
     async authFlow(authCode) {
@@ -624,13 +635,15 @@ export class microsoftAccount extends account {
         let resp = await MicrosoftAuth.authFlow(this.authCode);
         this.refreshToken = resp.refresh_token;
         this.accessToken = resp.access_token;
+        return this.accessToken;
     }
 
     async use() {
         if (await this.checkValidToken()) {
-
+            return this.accessToken;
         } else {
             await this.refresh();
+            return this.accessToken;
         }
     }
 }
@@ -717,16 +730,16 @@ export class accountsStorage {
     }
 }
 
-export async function XHR_GET_BEARER(url, token, headers?: {}) {
-    return await XHR_CUSTOM_BEARER("get", url, token, undefined, headers);
+export async function HttpGet_BEARER(url, token, headers?: {}) {
+    return await HttpCustom_BEARER("get", url, token, undefined, headers);
 }
 
-export async function XHR_CUSTOM_BEARER(method, url, token, body?: string, headers?: {}) {
+export async function HttpCustom_BEARER(method, url, token, body?: string, headers?: {}) {
     if (!headers) headers = {};
     headers["Authorization"] = `Bearer ${token}`
-    return XHR_CUSTOM(method, url, body, headers);
+    return HttpCustom(method, url, body, headers);
 }
 
-export async function XHR_POST_BEARER(url, data: string, token, headers?: {}) {
-    return await XHR_CUSTOM_BEARER("post", url, token, data, headers);
+export async function HttpPost_BEARER(url, data: string, token, headers?: {}) {
+    return await HttpCustom_BEARER("post", url, token, data, headers);
 }

@@ -1,15 +1,15 @@
-import {accountsStorage, crackedAccount, CrackedAuth, mojangAccount, XHR_GET_BEARER} from "../src";
-import {XHR_CUSTOM, XHR_GET, XHR_POST} from "../src/httpMethods";
+import {accountsStorage, crackedAccount, CrackedAuth, mojangAccount} from "../src";
 import {mocked} from "ts-jest/utils";
+import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
 
-let mXHR_POST = mocked(XHR_POST)
-let mXHR_GET = mocked(XHR_GET)
-let mXHR_CUSTOM = mocked(XHR_CUSTOM)
+let mXHR_POST = mocked(HttpPost)
+let mXHR_GET = mocked(HttpGet)
+let mXHR_CUSTOM = mocked(HttpCustom)
 
 let username = "username";
 let password = "password"
 let accessToken = CrackedAuth.uuid("accessToken") //In real situation it's not an uuid. It's there to check equality of tokens in requests.
-jest.mock("../src/httpMethods");
+jest.mock("http-client-methods");
 
 test("cracked-auth", async () => {
     let account = new crackedAccount(username);
@@ -21,7 +21,7 @@ test("cracked-auth", async () => {
     expect(await account.canChangeName()).toBeFalsy()
 })
 
-test("accountsStorage-addAccount",async()=>{
+test("accountsStorage-addAccount", async () => {
     let store = new accountsStorage();
     let acc1 = new mojangAccount();
     acc1.accessToken = accessToken;
@@ -38,7 +38,7 @@ test("accountsStorage-addAccount",async()=>{
     expect(store.accountList[2]).toStrictEqual(acc3);
 })
 
-test("accountsStorage-removeAccount",async()=>{
+test("accountsStorage-removeAccount", async () => {
     let store = new accountsStorage();
     let acc1 = new mojangAccount();
     acc1.accessToken = accessToken;
@@ -56,7 +56,7 @@ test("accountsStorage-removeAccount",async()=>{
     expect(store.accountList[1]).toStrictEqual(acc3);
 })
 
-test("accountsStorage-getByUUID",async()=>{
+test("accountsStorage-getByUUID", async () => {
     let store = new accountsStorage();
     let acc1 = new mojangAccount();
     acc1.accessToken = accessToken;
@@ -76,7 +76,7 @@ test("accountsStorage-getByUUID",async()=>{
     expect(acc4).toStrictEqual(acc2);
 })
 
-test("accountsStorage-getByName",async()=>{
+test("accountsStorage-getByName", async () => {
     let store = new accountsStorage();
     let acc1 = new mojangAccount();
     acc1.accessToken = accessToken;
@@ -96,7 +96,7 @@ test("accountsStorage-getByName",async()=>{
     expect(acc4).toStrictEqual(acc2);
 })
 
-test("accountsStorage-getById",async()=>{
+test("accountsStorage-getById", async () => {
     let store = new accountsStorage();
     let acc1 = new mojangAccount();
     acc1.accessToken = accessToken;
@@ -116,7 +116,7 @@ test("accountsStorage-getById",async()=>{
     expect(acc4).toStrictEqual(acc2);
 })
 
-test("accountsStorage-serialization",async()=>{
+test("accountsStorage-serialization", async () => {
     let store = new accountsStorage();
     let acc1 = new mojangAccount();
     acc1.accessToken = accessToken;
@@ -158,7 +158,7 @@ test("mojang-auth", async () => {
                 ],
                 "id": CrackedAuth.uuid("id1")
             },
-            "clientToken": CrackedAuth.uuid("clientToken") ,
+            "clientToken": CrackedAuth.uuid("clientToken"),
             "accessToken": accessToken,
             "availableProfiles": [
                 {
@@ -179,18 +179,18 @@ test("mojang-auth", async () => {
     expect(account.accessToken).toBe(accessToken)
     expect(account.clientToken).toBe(CrackedAuth.uuid("clientToken"))
 
-    await account.Login(username, password,true);
+    await account.Login(username, password, true);
     expect(account.login_password).toBe(password);
     expect(account.login_username).toBe(username);
 
 
 })
 
-test("account-getProfile",async()=>{
-    mocked(XHR_CUSTOM).mockImplementation(async (method:string,url: string,body,  headers?: {}) => {
+test("account-getProfile", async () => {
+    mocked(HttpCustom).mockImplementation(async (method: string, url: string, body, headers?: {}) => {
         expect(method).toBe("get");
         expect(url).toBe("https://api.minecraftservices.com/minecraft/profile");
-        expect(headers["Authorization"]).toBe("Bearer "+accessToken);
+        expect(headers["Authorization"]).toBe("Bearer " + accessToken);
         return JSON.stringify({
             "id": CrackedAuth.uuid(username),
             "name": username,
@@ -215,11 +215,16 @@ test("account-getProfile",async()=>{
     expect(account.profile.id).toBe(CrackedAuth.uuid(username));
 })
 
-test("account-checkValidToken",async()=>{
-    mXHR_POST.mockImplementation(async (url: string,body,  headers?: {}) => {
+test("account-checkValidToken", async () => {
+    mXHR_POST.mockImplementation(async (url: string, body, headers?: {}) => {
         expect(url).toBe("https://authserver.mojang.com/validate");
         expect(headers["Content-Type"]).toBe("application/json");
-        let jsonBody = JSON.parse(body);
+        let jsonBody;
+        if (typeof body === "string") {
+            jsonBody = JSON.parse(body);
+        } else {
+            jsonBody = body;
+        }
         expect(jsonBody["accessToken"]).toBe(accessToken);
         return "";
     })
