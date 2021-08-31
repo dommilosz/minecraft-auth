@@ -15,19 +15,18 @@ Mojang API:
 
 Package contains MojangApi class which can be used to fetch other users skins, uuids, check server status and more.
 
+### Deprecation Notice:
+Usage of lowercase classes like `mojangAccount` should be converted to use uppercase equivalents like `MojangAccount`. Usage of lowercase classes may be removed in the future. Currently, it only shows warning about the deprecation.   
+
 ### Error handling:
-All authentication errors are thrown by using AuthenticationError class.
-```javascript
-message: string;
-error: string;
-additionalInfo: string 
-```
+All authentication errors are thrown by using AuthenticationError or OwnershipError classes they all extend Error class.
+AuthenticationError also contains `additionalInfo: string`
 
 ### Authentication Examples: 
 * Mojang Authentication:
 ```javascript
 var minecraftAuth = require("minecraft-auth")
-let account = new minecraftAuth.mojangAccount();
+let account = new minecraftAuth.MojangAccount();
 async function authenticate(){
     try{
         await account.Login("username","password");
@@ -44,7 +43,7 @@ authenticate();
 var minecraftAuth = require("minecraft-auth")
 const prompt = require('prompt');
 
-let account = new minecraftAuth.microsoftAccount();
+let account = new minecraftAuth.MicrosoftAccount();
 
 async function authenticate() {
     try {
@@ -69,7 +68,7 @@ authenticate();
 * Cracked Authentication:
 ```javascript
 var minecraftAuth = require("minecraft-auth")
-let account = new minecraftAuth.crackedAccount("username");
+let account = new minecraftAuth.CrackedAccount("username");
 ```
 
 ### Usage example
@@ -86,11 +85,11 @@ console.log(account.profile.skins[0].url) //URL of the 1st skin.
 ```
 
 ### accountsStorage:
-accountsStorage is a storage for your accounts. 
+AccountsStorage is a storage for your accounts. 
 ###### Adding accounts:
-You can add new account with `accountsStorage::addAccount(account)`
+You can add new account with `AccountsStorage::addAccount(account)`
 ###### Removing accounts:
-You can remove account with `accountsStorage::removeAccount(account)`
+You can remove account with `AccountsStorage::removeAccount(account)`
 
 ###### Getting accounts:
 You can get accounts with:
@@ -98,5 +97,5 @@ You can get accounts with:
 * `getAccountByName(name)`
 * `getAccountByUUID(uuid)`
 ###### Saving/Reading accounts:
-* `deserialize` converts storage to JSON string to save in file
-* `serialize` converts string to accountStorage object
+* `serialize` converts storage to JSON string to save in file
+* `deserialize` converts string to AccountStorage object
