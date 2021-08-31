@@ -4,7 +4,7 @@ test('api-status', async () => {
     let status = await MojangAPI.getStatus();
     expect(status).toBeDefined();
     expect(typeof status).toBe("object");
-    status.forEach(el=>{
+    status.forEach(el => {
         expect(typeof el).toBe("object");
     })
 })

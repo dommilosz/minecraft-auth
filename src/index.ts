@@ -218,7 +218,12 @@ export module MojangAuth {
         return jsonResponse;
     }
 
-    export async function validateToken(token) {
+    export async function validateToken(token, alternativeValidation?: boolean) {
+        if (!alternativeValidation) return await _validateToken(token);
+        else return await _validateTokenAlternative(token);
+    }
+
+    export async function _validateToken(token) {
         let url = authUrl + "/validate";
         let body = {
             "accessToken": `${token}`,
@@ -229,6 +234,12 @@ export module MojangAuth {
         if (jsonResponse.error) {
             return false;
         }
+    }
+
+    export async function _validateTokenAlternative(token) {
+        let res = await HttpGet_BEARER("https://api.minecraftservices.com/minecraft/profile", token, {}, true);
+        return res.status != 401 && res.status != 403;
+
     }
 
     export type MCAuthResponse = {
@@ -491,7 +502,7 @@ export module MojangAPI {
     }
 }
 
-export class AuthenticationError extends Error{
+export class AuthenticationError extends Error {
     additionalInfo: string
 
     constructor(_error, _message, _additionalInfo) {
@@ -500,20 +511,22 @@ export class AuthenticationError extends Error{
         this.additionalInfo = _additionalInfo;
     }
 }
-export class OwnershipError extends Error{
+
+export class OwnershipError extends Error {
     constructor(_error) {
         super(_error);
     }
 }
 
-export class account {
+export class Account {
     accessToken: string;
     ownership: boolean;
     uuid: string;
     username: string;
     type: string;
     profile: MojangAPI.MCProfileResponse;
-    properties:any = {};
+    properties: any = {};
+    alternativeValidation: boolean;
 
     constructor(token: string, type: any) {
         this.accessToken = token;
@@ -522,7 +535,7 @@ export class account {
 
     async checkValidToken() {
         if (!this.accessToken) return false;
-        return await MojangAuth.validateToken(this.accessToken);
+        return await MojangAuth.validateToken(this.accessToken, this.alternativeValidation);
     }
 
     async checkOwnership() {
@@ -535,7 +548,7 @@ export class account {
         if (!this.accessToken) return undefined;
         if (!this.ownership) {
             await this.checkOwnership();
-            if(!this.ownership)throw new OwnershipError("User don't have minecraft on his account!");
+            if (!this.ownership) throw new OwnershipError("User don't have minecraft on his account!");
             return this.getProfile()
         }
         let profile = await MojangAPI.getProfile(this.accessToken);
@@ -562,7 +575,7 @@ export class account {
     }
 }
 
-export class mojangAccount extends account {
+export class MojangAccount extends Account {
     clientToken: string;
     login_username: string;
     login_password: string;
@@ -572,9 +585,9 @@ export class mojangAccount extends account {
     }
 
     async Login(username?: string, password?: string, saveCredentials?) {
-        if(!username)username=this.login_username;
-        if(!password)password=this.login_password;
-        if(!username||!password) throw new AuthenticationError("Username or password not provided","Username or password not provided","");
+        if (!username) username = this.login_username;
+        if (!password) password = this.login_password;
+        if (!username || !password) throw new AuthenticationError("Username or password not provided", "Username or password not provided", "");
         let resp = await MojangAuth.authenticate(username, password);
         this.clientToken = resp.clientToken;
         this.accessToken = resp.accessToken;
@@ -599,7 +612,7 @@ export class mojangAccount extends account {
         if (await this.checkValidToken()) {
             return this.accessToken;
         } else {
-            if(this.login_username&&this.login_password){
+            if (this.login_username && this.login_password) {
                 try {
                     await this.refresh();
                     return this.accessToken;
@@ -607,7 +620,7 @@ export class mojangAccount extends account {
                     await this.Login();
                     return this.accessToken;
                 }
-            }else{
+            } else {
                 await this.refresh();
                 return this.accessToken;
             }
@@ -615,12 +628,13 @@ export class mojangAccount extends account {
     }
 }
 
-export class microsoftAccount extends account {
+export class MicrosoftAccount extends Account {
     refreshToken: string;
     authCode: string;
 
     constructor() {
         super(undefined, "microsoft");
+        this.alternativeValidation = true;
     }
 
     async refresh() {
@@ -648,7 +662,7 @@ export class microsoftAccount extends account {
     }
 }
 
-export class crackedAccount extends account {
+export class CrackedAccount extends Account {
     constructor(username) {
         super(undefined, "cracked");
         this.ownership = false;
@@ -662,7 +676,7 @@ export class crackedAccount extends account {
     }
 }
 
-export class accountsStorage {
+export class AccountsStorage {
     accountList: any[] = [];
 
     constructor() {
@@ -675,7 +689,7 @@ export class accountsStorage {
 
     getAccountByUUID(uuid): any {
         let acc;
-        this.accountList.forEach((el: account) => {
+        this.accountList.forEach((el: Account) => {
             if (el.uuid === uuid) {
                 acc = el;
             }
@@ -685,7 +699,7 @@ export class accountsStorage {
 
     getAccountByName(name): any {
         let acc;
-        this.accountList.forEach((el: account) => {
+        this.accountList.forEach((el: Account) => {
             if (el.username === name) {
                 acc = el;
             }
@@ -693,11 +707,11 @@ export class accountsStorage {
         return acc;
     }
 
-    addAccount(account: account) {
+    addAccount(account: Account) {
         this.accountList.push(account);
     }
 
-    deleteAccount(account: account) {
+    deleteAccount(account: Account) {
         for (let i = 0; i < this.accountList.length; i++) {
             if (this.accountList[i] === account) {
                 this.accountList.splice(i, 1);
@@ -711,18 +725,18 @@ export class accountsStorage {
         return JSON.stringify(this.accountList);
     }
 
-    static deserialize(data: string): accountsStorage {
+    static deserialize(data: string): AccountsStorage {
         let accounts = JSON.parse(data);
-        let accStorage = new accountsStorage();
+        let accStorage = new AccountsStorage();
         accounts.forEach(el => {
             if (el.type == "microsoft") {
-                accStorage.addAccount(plainToClass(microsoftAccount, el))
+                accStorage.addAccount(plainToClass(MicrosoftAccount, el))
             } else if (el.type == "mojang") {
-                accStorage.addAccount(plainToClass(mojangAccount, el))
+                accStorage.addAccount(plainToClass(MojangAccount, el))
             } else if (el.type == "cracked") {
-                accStorage.addAccount(plainToClass(crackedAccount, el))
+                accStorage.addAccount(plainToClass(CrackedAccount, el))
             } else {
-                accStorage.addAccount(plainToClass(account, el))
+                accStorage.addAccount(plainToClass(Account, el))
             }
 
         })
@@ -730,16 +744,53 @@ export class accountsStorage {
     }
 }
 
-export async function HttpGet_BEARER(url, token, headers?: {}) {
-    return await HttpCustom_BEARER("get", url, token, undefined, headers);
+export async function HttpGet_BEARER(url, token, headers?: {}, objectResponse = false) {
+    return await HttpCustom_BEARER("get", url, token, undefined, headers, objectResponse);
 }
 
-export async function HttpCustom_BEARER(method, url, token, body?: string, headers?: {}) {
+export async function HttpCustom_BEARER(method, url, token, body?: string, headers?: {}, objectResponse = false) {
     if (!headers) headers = {};
     headers["Authorization"] = `Bearer ${token}`
-    return HttpCustom(method, url, body, headers);
+    return HttpCustom(method, url, body, headers, objectResponse);
 }
 
-export async function HttpPost_BEARER(url, data: string, token, headers?: {}) {
-    return await HttpCustom_BEARER("post", url, token, data, headers);
+export async function HttpPost_BEARER(url, data: string, token, headers?: {}, objectResponse = false) {
+    return await HttpCustom_BEARER("post", url, token, data, headers, objectResponse);
+}
+
+//Legacy classes
+
+export class mojangAccount extends MojangAccount {
+    constructor() {
+        console.warn("Usage of this class is deprecated. Consider using 'MojangAccount'");
+        super();
+    }
+}
+
+export class account extends Account {
+    constructor(token: string, type: any) {
+        console.warn("Usage of this class is deprecated. Consider using 'Account'");
+        super(token, type);
+    }
+}
+
+export class microsoftAccount extends MicrosoftAccount {
+    constructor() {
+        console.warn("Usage of this class is deprecated. Consider using 'MicrosoftAccount'");
+        super();
+    }
+}
+
+export class crackedAccount extends CrackedAccount {
+    constructor(username) {
+        console.warn("Usage of this class is deprecated. Consider using 'CrackedAccount'");
+        super(username);
+    }
+}
+
+export class accountsStorage extends AccountsStorage {
+    constructor() {
+        console.warn("Usage of this class is deprecated. Consider using 'AccountsStorage'");
+        super();
+    }
 }

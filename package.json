@@ -1,13 +1,13 @@
 {
   "name": "minecraft-auth",
-  "version": "1.0.26",
+  "version": "1.0.28",
   "description": "Package to authenticate with minecraft using traditional yggdrasil, new microsoft authentication and non-premium.",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
     "debug": "nodemon src/index.ts",
     "build": "tsc",
-    "npm-publish": "tsc && npm publish"
+    "npm-publish": "jest && tsc && npm publish"
   },
   "keywords": [
     "minecraft",
@@ -31,7 +31,7 @@
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
     "class-transformer": "^0.4.0",
-    "http-client-methods": "^1.0.2",
+    "http-client-methods": "^1.0.3",
     "node-fetch": "^2.6.1",
     "reflect-metadata": "^0.1.13"
   },

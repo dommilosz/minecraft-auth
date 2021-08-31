@@ -1,10 +1,8 @@
-import {accountsStorage, crackedAccount, CrackedAuth, mojangAccount} from "../src";
+import {AccountsStorage, CrackedAccount, CrackedAuth, MojangAccount} from "../src";
 import {mocked} from "ts-jest/utils";
-import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
+import {HttpCustom, HttpPost} from "http-client-methods";
 
 let mXHR_POST = mocked(HttpPost)
-let mXHR_GET = mocked(HttpGet)
-let mXHR_CUSTOM = mocked(HttpCustom)
 
 let username = "username";
 let password = "password"
@@ -12,7 +10,7 @@ let accessToken = CrackedAuth.uuid("accessToken") //In real situation it's not a
 jest.mock("http-client-methods");
 
 test("cracked-auth", async () => {
-    let account = new crackedAccount(username);
+    let account = new CrackedAccount(username);
     expect(account.uuid).toBeDefined()
     expect(account.username).toBe(username)
     expect(account.accessToken).toBeUndefined()
@@ -21,12 +19,12 @@ test("cracked-auth", async () => {
     expect(await account.canChangeName()).toBeFalsy()
 })
 
-test("accountsStorage-addAccount", async () => {
-    let store = new accountsStorage();
-    let acc1 = new mojangAccount();
+test("AccountsStorage-addAccount", async () => {
+    let store = new AccountsStorage();
+    let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
-    let acc2 = new crackedAccount(username);
-    let acc3 = new crackedAccount("username2");
+    let acc2 = new CrackedAccount(username);
+    let acc3 = new CrackedAccount("username2");
     store.addAccount(acc1);
     store.addAccount(acc2);
     store.addAccount(acc3);
@@ -38,12 +36,12 @@ test("accountsStorage-addAccount", async () => {
     expect(store.accountList[2]).toStrictEqual(acc3);
 })
 
-test("accountsStorage-removeAccount", async () => {
-    let store = new accountsStorage();
-    let acc1 = new mojangAccount();
+test("AccountsStorage-removeAccount", async () => {
+    let store = new AccountsStorage();
+    let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
-    let acc2 = new crackedAccount(username);
-    let acc3 = new crackedAccount("username2");
+    let acc2 = new CrackedAccount(username);
+    let acc3 = new CrackedAccount("username2");
     store.addAccount(acc1);
     store.addAccount(acc2);
     store.addAccount(acc3);
@@ -56,12 +54,12 @@ test("accountsStorage-removeAccount", async () => {
     expect(store.accountList[1]).toStrictEqual(acc3);
 })
 
-test("accountsStorage-getByUUID", async () => {
-    let store = new accountsStorage();
-    let acc1 = new mojangAccount();
+test("AccountsStorage-getByUUID", async () => {
+    let store = new AccountsStorage();
+    let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
-    let acc2 = new crackedAccount(username);
-    let acc3 = new crackedAccount("username2");
+    let acc2 = new CrackedAccount(username);
+    let acc3 = new CrackedAccount("username2");
     store.addAccount(acc1);
     store.addAccount(acc2);
     store.addAccount(acc3);
@@ -76,12 +74,12 @@ test("accountsStorage-getByUUID", async () => {
     expect(acc4).toStrictEqual(acc2);
 })
 
-test("accountsStorage-getByName", async () => {
-    let store = new accountsStorage();
-    let acc1 = new mojangAccount();
+test("AccountsStorage-getByName", async () => {
+    let store = new AccountsStorage();
+    let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
-    let acc2 = new crackedAccount(username);
-    let acc3 = new crackedAccount("username2");
+    let acc2 = new CrackedAccount(username);
+    let acc3 = new CrackedAccount("username2");
     store.addAccount(acc1);
     store.addAccount(acc2);
     store.addAccount(acc3);
@@ -96,12 +94,12 @@ test("accountsStorage-getByName", async () => {
     expect(acc4).toStrictEqual(acc2);
 })
 
-test("accountsStorage-getById", async () => {
-    let store = new accountsStorage();
-    let acc1 = new mojangAccount();
+test("AccountsStorage-getById", async () => {
+    let store = new AccountsStorage();
+    let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
-    let acc2 = new crackedAccount(username);
-    let acc3 = new crackedAccount("username2");
+    let acc2 = new CrackedAccount(username);
+    let acc3 = new CrackedAccount("username2");
     store.addAccount(acc1);
     store.addAccount(acc2);
     store.addAccount(acc3);
@@ -116,23 +114,23 @@ test("accountsStorage-getById", async () => {
     expect(acc4).toStrictEqual(acc2);
 })
 
-test("accountsStorage-serialization", async () => {
-    let store = new accountsStorage();
-    let acc1 = new mojangAccount();
+test("AccountsStorage-serialization", async () => {
+    let store = new AccountsStorage();
+    let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
-    let acc2 = new crackedAccount(username);
-    let acc3 = new crackedAccount("username2");
+    let acc2 = new CrackedAccount(username);
+    let acc3 = new CrackedAccount("username2");
     store.addAccount(acc1);
     store.addAccount(acc2);
     store.addAccount(acc3);
 
     let string = store.serialize();
-    let store2 = accountsStorage.deserialize(string);
+    let store2 = AccountsStorage.deserialize(string);
     expect(store.accountList).toStrictEqual(store2.accountList);
 })
 
 test("mojang-auth", async () => {
-    let account = new mojangAccount();
+    let account = new MojangAccount();
     mXHR_POST.mockImplementation(async (url: string, body: string, headers?: {}) => {
         expect(url).toBe("https://authserver.mojang.com/authenticate");
         expect(headers["Content-Type"]).toBe("application/json");
@@ -206,7 +204,7 @@ test("account-getProfile", async () => {
         })
     })
 
-    let account = new mojangAccount();
+    let account = new MojangAccount();
     account.accessToken = accessToken;
     account.ownership = true;
     expect(account.profile).toBeUndefined();
@@ -229,7 +227,7 @@ test("account-checkValidToken", async () => {
         return "";
     })
 
-    let account = new mojangAccount();
+    let account = new MojangAccount();
     account.accessToken = accessToken;
     expect(await account.checkValidToken()).toBeTruthy();
 })
