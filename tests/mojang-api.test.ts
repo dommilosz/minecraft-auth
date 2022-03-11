@@ -1,23 +1,5 @@
 import {MojangAPI} from "../src";
 
-test('api-status', async () => {
-    let status = await MojangAPI.getStatus();
-    expect(status).toBeDefined();
-    expect(typeof status).toBe("object");
-    status.forEach(el => {
-        expect(typeof el).toBe("object");
-    })
-})
-
-test('api-statistics', async () => {
-    let statistics = await MojangAPI.getStatistics();
-    expect(statistics).toBeDefined();
-    expect(typeof statistics).toBe("object");
-    expect(typeof statistics.last24h).toBe("number");
-    expect(typeof statistics.saleVelocityPerSeconds).toBe("number");
-    expect(typeof statistics.total).toBe("number");
-})
-
 test('api-getUUID', async () => {
     let response = await MojangAPI.usernameToUUID("MHF_Steve");
     expect(response).toBeDefined();

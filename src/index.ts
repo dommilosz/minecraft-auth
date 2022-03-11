@@ -290,13 +290,6 @@ export module CrackedAuth {
     }
 }
 export module MojangAPI {
-    export async function getStatus() {
-        let url = "https://status.mojang.com/check";
-        let response = await HttpGet(url);
-        let jsonResponse: StatusResponse = JSON.parse(response);
-        return jsonResponse;
-    }
-
     export async function usernameToUUID(username: string) {
         let url = `https://api.mojang.com/users/profiles/minecraft/${username}`;
         let response = await HttpGet(url);
@@ -326,19 +319,6 @@ export module MojangAPI {
         let url = "https://sessionserver.mojang.com/blockedservers";
         let response: string = await HttpGet(url);
         return response.split('\n');
-    }
-
-    export async function getStatistics(options?: StatisticsOption[]) {
-        if (!options) {
-            options = ["item_sold_minecraft", "prepaid_card_redeemed_minecraft"];
-        }
-        let url = "https://api.mojang.com/orders/statistics";
-        let body = {
-            "metricKeys": options
-        }
-        let response = await HttpPost(url, JSON.stringify(body), {"Content-Type": "application/json"})
-        let jsonResponse: StatisticsResponse = JSON.parse(response);
-        return jsonResponse;
     }
 
     export async function nameChangeInfo(token) {

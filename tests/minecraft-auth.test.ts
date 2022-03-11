@@ -1,5 +1,5 @@
 import {AccountsStorage, CrackedAccount, CrackedAuth, MojangAccount} from "../src";
-import {mocked} from "ts-jest/utils";
+import {mocked} from "jest-mock";
 import {HttpCustom, HttpPost} from "http-client-methods";
 
 let mXHR_POST = mocked(HttpPost)
