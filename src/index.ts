@@ -3,6 +3,10 @@ import {plainToClass} from "class-transformer";
 import crypto from "crypto";
 import atob from "atob";
 import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
+import * as http from "http";
+
+export type ListeningHttpServer = http.Server & {fullClose:any};
+
 
 export module MicrosoftAuth {
     export let appID;
@@ -22,6 +26,68 @@ export module MicrosoftAuth {
         compiledScope = encodeURIComponent(scope);
         compiledUrl = encodeURIComponent(redirectURL);
         compiledSecret = encodeURIComponent(appSecret);
+    }
+
+    export async function _createServer(port: number):Promise<ListeningHttpServer> {
+        const http = require("http");
+        const host = 'localhost';
+        const server = http.createServer();
+        await server.listen(port, host, () => {
+            console.log(`MS Token Server is running on http://${host}:${port}`);
+        });
+        server.fullClose = async function(){
+            await server.close();
+        }
+        return server;
+    }
+
+    export async function _listenForCode(server:ListeningHttpServer, timeout:number = 60*1000):Promise<string>{
+        return await new Promise<string>((r, j) => {
+            server.fullClose = async function (){
+                await server.close();
+                clearTimeout(_timeout);
+            }
+            let _timeout = setTimeout(async () => {
+                await server.fullClose();
+                j(undefined);
+            }, timeout)
+            const requestListener = async function (req, res) {
+                switch (req.url.split("?")[0]) {
+                    case "/token":
+                        await res.writeHead(200);
+                        await res.end();
+                        await server.fullClose();
+                        r(req.url.split("?code=")[1]);
+                        break;
+                    case "/url":
+                        await res.writeHead(200);
+                        await res.end(createUrl());
+                        break;
+                    case "/close":
+                        await server.fullClose();
+                        j(undefined);
+                        break;
+                    case "/auth":
+                        res.writeHead(302, {
+                            'Location': createUrl()
+                        });
+                        res.end();
+                        break;
+                }
+                await res.writeHead(404);
+                await res.end();
+            };
+            server.on("request",requestListener);
+        })
+    }
+
+    export async function listenForCode(port: number, timeout: number = 60 * 1000): Promise<string> {
+        let server =  await _createServer(port);
+        return _listenForCode(server,timeout);
+    }
+
+    export function onTokenResponse() {
+
     }
 
     export function createUrl() {

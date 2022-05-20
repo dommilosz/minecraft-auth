@@ -1,7 +1,6 @@
-import {AccountsStorage, CrackedAccount, CrackedAuth, MojangAccount} from "../src";
+import {AccountsStorage, CrackedAccount, CrackedAuth, MicrosoftAuth, MojangAccount} from "../src";
 import {mocked} from "jest-mock";
-import {HttpCustom, HttpPost} from "http-client-methods";
-
+import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
 let mXHR_POST = mocked(HttpPost)
 
 let username = "username";
@@ -231,4 +230,3 @@ test("account-checkValidToken", async () => {
     account.accessToken = accessToken;
     expect(await account.checkValidToken()).toBeTruthy();
 })
-
