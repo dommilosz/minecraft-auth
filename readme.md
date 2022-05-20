@@ -38,7 +38,7 @@ let account = new minecraftAuth.MicrosoftAccount();
 
 let appID = "app id";
 let appSecret = "app secret";
-let redirectURL = "http://localhost/auth";
+let redirectURL = "http://localhost:8080/token";
 
 minecraftAuth.MicrosoftAuth.setup(appID, appSecret, redirectURL);
 
