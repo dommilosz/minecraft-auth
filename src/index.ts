@@ -57,7 +57,13 @@ export module MicrosoftAuth {
                         await res.writeHead(200);
                         await res.end();
                         await server.fullClose();
+                        if(req.url.includes("?code"))
                         r(req.url.split("?code=")[1]);
+                        if(req.url.includes("?error")){
+                            let error = req.url.split("?error=")[1].split("&")[0];
+                            let error_description = decodeURIComponent(req.url.split("&error_description=")[1])
+                            j(new AuthenticationError(error,error_description,""));
+                        }
                         break;
                     case "/url":
                         await res.writeHead(200);

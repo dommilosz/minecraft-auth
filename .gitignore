@@ -107,3 +107,4 @@ app
 
 /.idea
 /dist/
+/pnpm-lock.yaml
