@@ -1,6 +1,6 @@
-import {AccountsStorage, CrackedAccount, CrackedAuth, MicrosoftAuth, MojangAccount} from "../src";
+import {AccountsStorage, CrackedAccount, CrackedAuth, MicrosoftAccount, MojangAccount} from "../src";
 import {mocked} from "jest-mock";
-import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
+import {HttpCustom, HttpPost} from "http-client-methods";
 let mXHR_POST = mocked(HttpPost)
 
 let username = "username";
@@ -114,18 +114,24 @@ test("AccountsStorage-getById", async () => {
 })
 
 test("AccountsStorage-serialization", async () => {
-    let store = new AccountsStorage();
+    let expectedStore = new AccountsStorage();
     let acc1 = new MojangAccount();
     acc1.accessToken = accessToken;
     let acc2 = new CrackedAccount(username);
     let acc3 = new CrackedAccount("username2");
-    store.addAccount(acc1);
-    store.addAccount(acc2);
-    store.addAccount(acc3);
+    let acc4 = new MicrosoftAccount();
+    expectedStore.addAccount(acc1);
+    expectedStore.addAccount(acc2);
+    expectedStore.addAccount(acc3);
+    expectedStore.addAccount(acc4);
 
-    let string = store.serialize();
-    let store2 = AccountsStorage.deserialize(string);
-    expect(store.accountList).toStrictEqual(store2.accountList);
+    let string = expectedStore.serialize();
+    let deserializedStore = AccountsStorage.deserialize(string);
+    expect(deserializedStore.accountList).toEqual(expectedStore.accountList);
+    expect(deserializedStore.accountList[0]).toBeInstanceOf(MojangAccount);
+    expect(deserializedStore.accountList[1]).toBeInstanceOf(CrackedAccount);
+    expect(deserializedStore.accountList[2]).toBeInstanceOf(CrackedAccount);
+    expect(deserializedStore.accountList[3]).toBeInstanceOf(MicrosoftAccount);
 })
 
 test("mojang-auth", async () => {

@@ -1,6 +1,6 @@
 {
   "name": "minecraft-auth",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "description": "Package to authenticate with minecraft using traditional yggdrasil, new microsoft authentication and non-premium.",
   "main": "dist/index.js",
   "scripts": {
@@ -29,9 +29,7 @@
   "dependencies": {
     "@types/node": "^17.0.21",
     "atob": "^2.1.2",
-    "class-transformer": "^0.5.1",
-    "http-client-methods": "^1.0.3",
-    "reflect-metadata": "^0.1.13"
+    "http-client-methods": "^1.0.3"
   },
   "files": [
     "dist/**/*"

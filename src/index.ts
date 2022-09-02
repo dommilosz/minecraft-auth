@@ -1,12 +1,10 @@
-import 'reflect-metadata';
-import {plainToClass} from "class-transformer";
 import crypto from "crypto";
 import atob from "atob";
 import {HttpCustom, HttpGet, HttpPost} from "http-client-methods";
 import * as http from "http";
 
 export type ListeningHttpServer = http.Server & {fullClose:any};
-
+export type AccountType = "mojang"|"cracked"|"microsoft"|"token"
 
 export module MicrosoftAuth {
     export let appID;
@@ -400,7 +398,7 @@ export module MojangAPI {
         return jsonResponse;
     }
 
-    export async function nameAvailability(name, token) {
+    export async function nameAvailability(name:string, token) {
         let url = `https://api.minecraftservices.com/minecraft/profile/name/${name}/available`;
         let response = await HttpGet_BEARER(url, token);
         let jsonResponse: NameAvailabilityResponse = JSON.parse(response);
@@ -469,18 +467,6 @@ export module MojangAPI {
     }
     export type NameAvailabilityResponse = {
         "status": "DUPLICATE" | "AVAILABLE"
-    }
-    export type StatisticsOption =
-        "item_sold_minecraft"
-        | "prepaid_card_redeemed_minecraft"
-        | "item_sold_cobalt"
-        | "item_sold_scrolls"
-        | "prepaid_card_redeemed_cobalt"
-        | "item_sold_dungeons"
-    export type StatisticsResponse = {
-        "total": number,
-        "last24h": number,
-        "saleVelocityPerSeconds": number
     }
     export type StatusResponse = [
         {
@@ -571,16 +557,16 @@ export class OwnershipError extends Error {
 }
 
 export class Account {
-    accessToken: string;
+    accessToken?: string;
     ownership: boolean;
     uuid: string;
     username: string;
-    type: string;
+    type: AccountType;
     profile: MojangAPI.MCProfileResponse;
     properties: any = {};
     alternativeValidation: boolean;
 
-    constructor(token: string, type: any) {
+    constructor(token: string, type: AccountType) {
         this.accessToken = token;
         this.type = type;
     }
@@ -610,13 +596,13 @@ export class Account {
         return profile;
     }
 
-    async changeSkin(url: any, variant: "slim" | "classic") {
+    async changeSkin(url: string, variant: "slim" | "classic") {
         if (!this.accessToken) return;
         await MojangAPI.changeSkin(url, variant, this.accessToken);
         return true;
     }
 
-    async checkNameAvailability(name) {
+    async checkNameAvailability(name:string) {
         if (!this.accessToken) return false;
         return await MojangAPI.nameAvailability(name, this.accessToken)
     }
@@ -729,18 +715,18 @@ export class CrackedAccount extends Account {
 }
 
 export class AccountsStorage {
-    accountList: any[] = [];
+    accountList: Account[] = [];
 
     constructor() {
 
     }
 
-    getAccount(index): any {
+    getAccount(index): Account {
         return this.accountList[index];
     }
 
-    getAccountByUUID(uuid): any {
-        let acc;
+    getAccountByUUID(uuid): Account|undefined {
+        let acc = undefined;
         this.accountList.forEach((el: Account) => {
             if (el.uuid === uuid) {
                 acc = el;
@@ -749,8 +735,8 @@ export class AccountsStorage {
         return acc;
     }
 
-    getAccountByName(name): any {
-        let acc;
+    getAccountByName(name): Account|undefined {
+        let acc = undefined;
         this.accountList.forEach((el: Account) => {
             if (el.username === name) {
                 acc = el;
@@ -780,15 +766,15 @@ export class AccountsStorage {
     static deserialize(data: string): AccountsStorage {
         let accounts = JSON.parse(data);
         let accStorage = new AccountsStorage();
-        accounts.forEach(el => {
-            if (el.type == "microsoft") {
-                accStorage.addAccount(plainToClass(MicrosoftAccount, el))
-            } else if (el.type == "mojang") {
-                accStorage.addAccount(plainToClass(MojangAccount, el))
-            } else if (el.type == "cracked") {
-                accStorage.addAccount(plainToClass(CrackedAccount, el))
+        accounts.forEach(account => {
+            if (account.type == "microsoft") {
+                accStorage.addAccount(Object.setPrototypeOf(account,MicrosoftAccount.prototype))
+            } else if (account.type == "mojang") {
+                accStorage.addAccount(Object.setPrototypeOf(account,MojangAccount.prototype))
+            } else if (account.type == "cracked") {
+                accStorage.addAccount(Object.setPrototypeOf(account,CrackedAccount.prototype))
             } else {
-                accStorage.addAccount(plainToClass(Account, el))
+                accStorage.addAccount(Object.setPrototypeOf(account,Account.prototype))
             }
 
         })
@@ -808,41 +794,4 @@ export async function HttpCustom_BEARER(method, url, token, body?: string, heade
 
 export async function HttpPost_BEARER(url, data: string, token, headers?: {}, objectResponse = false) {
     return await HttpCustom_BEARER("post", url, token, data, headers, objectResponse);
-}
-
-//Legacy classes
-
-export class mojangAccount extends MojangAccount {
-    constructor() {
-        console.warn("Usage of this class is deprecated. Consider using 'MojangAccount'");
-        super();
-    }
-}
-
-export class account extends Account {
-    constructor(token: string, type: any) {
-        console.warn("Usage of this class is deprecated. Consider using 'Account'");
-        super(token, type);
-    }
-}
-
-export class microsoftAccount extends MicrosoftAccount {
-    constructor() {
-        console.warn("Usage of this class is deprecated. Consider using 'MicrosoftAccount'");
-        super();
-    }
-}
-
-export class crackedAccount extends CrackedAccount {
-    constructor(username) {
-        console.warn("Usage of this class is deprecated. Consider using 'CrackedAccount'");
-        super(username);
-    }
-}
-
-export class accountsStorage extends AccountsStorage {
-    constructor() {
-        console.warn("Usage of this class is deprecated. Consider using 'AccountsStorage'");
-        super();
-    }
 }
