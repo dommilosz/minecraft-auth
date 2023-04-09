@@ -1,4 +1,4 @@
-import {HttpGet_BEARER} from "../src";
+import {HttpGet_BEARER} from "../src/bearer_requests";
 
 test('bearer-get', async () => {
     let response = await HttpGet_BEARER("https://httpbin.org/get", "token")

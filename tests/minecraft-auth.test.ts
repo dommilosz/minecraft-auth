@@ -1,6 +1,11 @@
-import {AccountsStorage, CrackedAccount, CrackedAuth, MicrosoftAccount, MojangAccount} from "../src";
 import {mocked} from "jest-mock";
 import {HttpCustom, HttpPost} from "http-client-methods";
+import {CrackedAuth} from "../src/index";
+import {CrackedAccount} from "../src/CrackedAuth/CrackedAccount";
+import {AccountsStorage} from "../src/AccountStorage";
+import {MojangAccount} from "../src/MojangAuth/MojangAccount";
+import {MicrosoftAccount} from "../src/MicrosoftAuth/MicrosoftAccount";
+
 let mXHR_POST = mocked(HttpPost)
 
 let username = "username";
@@ -63,7 +68,7 @@ test("AccountsStorage-getByUUID", async () => {
     store.addAccount(acc2);
     store.addAccount(acc3);
 
-    let acc4 = store.getAccountByUUID(acc2.uuid);
+    let acc4 = store.getAccountByUUID(acc2.uuid!);
 
     expect(store.accountList).toBeDefined();
     expect(store.accountList).toHaveLength(3);
@@ -83,7 +88,7 @@ test("AccountsStorage-getByName", async () => {
     store.addAccount(acc2);
     store.addAccount(acc3);
 
-    let acc4 = store.getAccountByName(acc2.username);
+    let acc4 = store.getAccountByName(acc2.username!);
 
     expect(store.accountList).toBeDefined();
     expect(store.accountList).toHaveLength(3);
@@ -136,7 +141,8 @@ test("AccountsStorage-serialization", async () => {
 
 test("mojang-auth", async () => {
     let account = new MojangAccount();
-    mXHR_POST.mockImplementation(async (url: string, body: string, headers?: {}) => {
+    // @ts-ignore
+    mocked(HttpPost).mockImplementation(async (url: string, body: string, headers?: any) => {
         expect(url).toBe("https://authserver.mojang.com/authenticate");
         expect(headers["Content-Type"]).toBe("application/json");
         let jsonBody = JSON.parse(body);
@@ -190,7 +196,7 @@ test("mojang-auth", async () => {
 })
 
 test("account-getProfile", async () => {
-    mocked(HttpCustom).mockImplementation(async (method: string, url: string, body, headers?: {}) => {
+    mocked(HttpCustom).mockImplementation(async (method: string, url: string, body, headers?: any) => {
         expect(method).toBe("get");
         expect(url).toBe("https://api.minecraftservices.com/minecraft/profile");
         expect(headers["Authorization"]).toBe("Bearer " + accessToken);
@@ -215,11 +221,11 @@ test("account-getProfile", async () => {
     expect(account.profile).toBeUndefined();
     await account.getProfile();
     expect(account.profile).toBeDefined();
-    expect(account.profile.id).toBe(CrackedAuth.uuid(username));
+    expect(account.profile!.id).toBe(CrackedAuth.uuid(username));
 })
 
 test("account-checkValidToken", async () => {
-    mXHR_POST.mockImplementation(async (url: string, body, headers?: {}) => {
+    mXHR_POST.mockImplementation(async (url: string, body, headers?: any) => {
         expect(url).toBe("https://authserver.mojang.com/validate");
         expect(headers["Content-Type"]).toBe("application/json");
         let jsonBody;

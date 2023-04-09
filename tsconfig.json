@@ -1,7 +1,7 @@
 {
+  "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
     "sourceMap": true,
-    "esModuleInterop": true,
     "outDir": "dist",
     "declaration": true
   },

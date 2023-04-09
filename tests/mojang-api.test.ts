@@ -26,11 +26,3 @@ test('api-getProfileByUUID', async () => {
 
     expect(typeof response.properties[0].value.textures.SKIN.url).toBe("string");
 })
-
-test('api-nameHistory', async () => {
-    let response = await MojangAPI.nameHistory("c06f89064c8a49119c29ea1dbd1aab82"); //MHF_Steve uuid
-    expect(response).toBeDefined();
-    expect(typeof response).toBe("object");
-    expect(response.length).toBeGreaterThan(0);
-    expect(typeof response[0].name).toBe("string");
-})

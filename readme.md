@@ -15,36 +15,41 @@ Mojang API:
 
 Package contains MojangApi class which can be used to fetch other users skins, uuids, check server status and more.
 
-### Deprecation Notice:
-Usage of lowercase classes like `mojangAccount` should be converted to use uppercase equivalents like `MojangAccount`. Usage of lowercase classes may be removed in the future. Currently, it only shows warning about the deprecation.   
+### 2.0.0 migration
+Version 2.0.0 changes how Microsoft Authentication works. 
+* Azure application should be registered with `Mobile and desktop applications` type
+* parameters in Setup and listenForCode functions changed
 
 ### Error handling:
 All authentication errors are thrown by using AuthenticationError or OwnershipError classes they all extend Error class.
 AuthenticationError also contains `additionalInfo: string`
 
+### Installation:
+```shell
+npm i --save minecraft-auth
+```
+Importing:
+```javascript
+import * as minecraftAuth from "./src/index";
+//or
+const minecraftAuth = require("./src/index.ts");
+```
+
 ### Authentication Examples: 
 * Mojang Authentication:
 ```javascript
-var minecraftAuth = require("minecraft-auth")
 let account = new minecraftAuth.MojangAccount();
-
 await account.Login("email","password");
 ```
  
  * Microsoft Authentication:
  ```javascript
-var minecraftAuth = require("minecraft-auth")
+const MicrosoftAuth = minecraftAuth.MicrosoftAuth;
+
 let account = new minecraftAuth.MicrosoftAccount();
+MicrosoftAuth.setup({appID:"747bf062-ab9c-4690-842d-a77d18d4cf82"});
+let code = await MicrosoftAuth.listenForCode();
 
-let appID = "app id";
-let appSecret = "app secret";
-let redirectURL = "http://localhost:8080/token";
-
-minecraftAuth.MicrosoftAuth.setup(appID, appSecret, redirectURL);
-
-console.log(minecraftAuth.MicrosoftAuth.createUrl());
-
-let code = await MicrosoftAuth.listenForCode(8080);
 if(code !== undefined){
     await account.authFlow(code);
 }
@@ -52,13 +57,12 @@ if(code !== undefined){
 
 * Cracked Authentication:
 ```javascript
-var minecraftAuth = require("minecraft-auth")
 let account = new minecraftAuth.CrackedAccount("username");
 ```
 
 ### Usage example
 ```javascript
-await authenticate(); //function from above examples
+//any type of authentication eg. from above examples
         
 console.log(account.accessToken);
 await account.getProfile();
