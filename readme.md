@@ -8,7 +8,8 @@ Minecraft-auth is a package to authenticate and get minecraft access tokens.
 
 Authentication Types:
 * Mojang Authentication - standard mojang authentication using username and password
-* Microsoft Authentication - new Microsoft oauth authentication to login to new accounts / migrated to microsoft
+* Microsoft Authentication - new Microsoft oauth authentication to login to new accounts / migrated to microsoft.
+Read how to setup it [here](https://github.com/dommilosz/minecraft-auth/wiki/How-to-setup-Microsoft-Auth) 
 * Cracked Authentication - non premium offline mode authentication. Requires only username.
 
 Mojang API:
