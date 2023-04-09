@@ -30,3 +30,12 @@ test("microsoft-auth-server-redirect-test",async () =>{
     await code;
     expect(obj.url).toStrictEqual(MicrosoftAuth.createUrl());
 })
+
+test("microsoft-auth-server-redirect-after-auth-test",async () =>{
+    let codeIn = "test_code_123";
+    let redirecturl = "https://httpbin.org/get?test";
+    let code = MicrosoftAuth.listenForCode({redirectAfterAuth:redirecturl});
+    let obj = await HttpGet("http://localhost:8080/token?code=" + codeIn, undefined, true);
+    expect(await code).toStrictEqual(codeIn);
+    expect(obj.url).toStrictEqual(redirecturl);
+})
