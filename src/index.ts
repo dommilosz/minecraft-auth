@@ -6,3 +6,6 @@ export * as MojangAPI from "./MojangAPI/MojangAPI"
 export {MicrosoftAccount} from "./MicrosoftAuth/MicrosoftAccount"
 export {CrackedAccount} from "./CrackedAuth/CrackedAccount"
 export {MojangAccount} from "./MojangAuth/MojangAccount"
+
+export {AccountsStorage} from "./AccountStorage"
+export {Account} from "./Account"
