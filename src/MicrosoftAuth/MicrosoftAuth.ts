@@ -12,11 +12,18 @@ import {AuthenticationError, ListeningHttpServer} from "../types";
 
 let config: MSConfigType = {
     scope: "XboxLive.signin offline_access",
-    redirectURL: "http://localhost:8080/token"
+    redirectURL: "http://localhost:8080/token",
+    appID: "747bf062-ab9c-4690-842d-a77d18d4cf82",
+    mode: "SPA"
 }
 
+
 export function setup(_config: Partial<MSConfigType>) {
-    config = {...config,..._config};
+    if(_config.appSecret){
+        config = {...config,mode:"Web",..._config};
+    }else{
+        config = {...config,mode:"SPA",..._config};
+    }
 }
 
 async function createServer(serverConfig: ServerConfigType): Promise<ListeningHttpServer> {
@@ -106,20 +113,31 @@ export function createUrl() {
     let encodedID = encodeURIComponent(config.appID??"");
     let encodedUrl = encodeURIComponent(config.redirectURL);
     let encodedScope = encodeURIComponent(config.scope);
+
     return `https://login.live.com/oauth20_authorize.srf?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}`;
 }
 
 export async function getToken(authCode:string) {
-    let encodedID = encodeURIComponent(config.appID??"");
+    let encodedID = encodeURIComponent(config.appID);
     let encodedUrl = encodeURIComponent(config.redirectURL);
 
-    const url = 'https://login.live.com/oauth20_token.srf';
-    const body = `client_id=${encodedID}&code=${authCode}&grant_type=authorization_code&redirect_uri=${encodedUrl}`;
-    const response = await HttpPost(url, body, {
-        'Content-Type': 'application/x-www-form-urlencoded',
-    });
+    let url = 'https://login.live.com/oauth20_token.srf';
+    let body = `client_id=${encodedID}&code=${authCode}&grant_type=authorization_code&redirect_uri=${encodedUrl}`;
 
-    const jsonResponse: TokenResponse = JSON.parse(response);
+    if(config.mode === "Web"){
+        if(!config.appSecret){
+            throw new AuthenticationError("App secret was not provided", "App secret was not provided in getToken")
+        }
+
+        let encodedSecret = encodeURIComponent(config.appSecret);
+
+        url = "https://login.live.com/oauth20_token.srf";
+        body = `client_id=${encodedID}&client_secret=${encodedSecret}&code=${authCode}&grant_type=authorization_code&redirect_uri=${encodedUrl}`
+    }
+
+    let response = await HttpPost(url, body, {"Content-Type": "application/x-www-form-urlencoded"})
+
+    let jsonResponse: TokenResponse = JSON.parse(response);
     if (jsonResponse.error) {
         throw new AuthenticationError(
             jsonResponse.error,
@@ -135,8 +153,20 @@ export async function getTokenRefresh(refreshToken:string) {
     let encodedID = encodeURIComponent(config.appID??"");
     let encodedUrl = encodeURIComponent(config.redirectURL);
 
-    const url = 'https://login.live.com/oauth20_token.srf';
-    const body = `client_id=${encodedID}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${encodedUrl}`;
+    let url = 'https://login.live.com/oauth20_token.srf';
+    let body = `client_id=${encodedID}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${encodedUrl}`;
+
+    if(config.mode === "Web"){
+        if(!config.appSecret){
+            throw new AuthenticationError("App secret was not provided", "App secret was not provided in getToken")
+        }
+
+        let encodedSecret = encodeURIComponent(config.appSecret);
+
+        url = "https://login.live.com/oauth20_token.srf";
+        body = `client_id=${encodedID}&client_secret=${encodedSecret}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${encodedUrl}`
+    }
+
     const response = await HttpPost(url, body, {
         'Content-Type': 'application/x-www-form-urlencoded',
     });

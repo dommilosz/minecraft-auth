@@ -37,24 +37,39 @@ const minecraftAuth = require("./src/index.ts");
 ```
 
 ### Authentication Examples: 
-* Mojang Authentication:
+
+ * Microsoft Authentication (public client, [valid for 24h](https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#refresh-the-access-token)): 
 ```javascript
-let account = new minecraftAuth.MojangAccount();
-await account.Login("email","password");
-```
- 
- * Microsoft Authentication:
- ```javascript
 const MicrosoftAuth = minecraftAuth.MicrosoftAuth;
 
 let account = new minecraftAuth.MicrosoftAccount();
-MicrosoftAuth.setup({appID:"747bf062-ab9c-4690-842d-a77d18d4cf82"});
+MicrosoftAuth.setup({appID:"747bf062-ab9c-4690-842d-a77d18d4cf82"}); //https://github.com/dommilosz/minecraft-auth/wiki/How-to-setup-Microsoft-Auth
 let code = await MicrosoftAuth.listenForCode();
 
 if(code !== undefined){
     await account.authFlow(code);
 }
  ```
+
+* Microsoft Authentication ([don't have specified lifetimes](https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#refresh-the-access-token)):
+ ```javascript
+const MicrosoftAuth = minecraftAuth.MicrosoftAuth;
+
+let account = new minecraftAuth.MicrosoftAccount();
+MicrosoftAuth.setup({appID:"YOUR APP ID", appSecret:"YOUR APP SECRET"}); //https://github.com/dommilosz/minecraft-auth/wiki/How-to-setup-Microsoft-Auth
+let code = await MicrosoftAuth.listenForCode();
+
+if(code !== undefined){
+    await account.authFlow(code);
+}
+ ```
+
+* Mojang Authentication (obsolete due to migration):
+```javascript
+let account = new minecraftAuth.MojangAccount();
+await account.Login("email","password");
+```
+
 
 * Cracked Authentication:
 ```javascript

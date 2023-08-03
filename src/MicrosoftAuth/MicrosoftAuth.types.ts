@@ -1,7 +1,9 @@
 export type MSConfigType = {
-    appID?: string,
+    appID: string,
+    appSecret?:string
     redirectURL: string,
     scope: string,
+    mode:"SPA"|"Web"
 }
 
 export type ServerConfigType = {
