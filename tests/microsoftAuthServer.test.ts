@@ -26,7 +26,7 @@ test("microsoft-auth-server-url-test",async () =>{
 
 test("microsoft-auth-server-redirect-test",async () =>{
     let code = MicrosoftAuth.listenForCode({timeout:500}).catch(_=>{});
-    let obj = await HttpGet("http://localhost:8080/auth",undefined,true);
+    let obj = await HttpGet("http://localhost:8080/auth",{},true);
     await code;
     expect(obj.url).toStrictEqual(MicrosoftAuth.createUrl());
 })
@@ -35,7 +35,7 @@ test("microsoft-auth-server-redirect-after-auth-test",async () =>{
     let codeIn = "test_code_123";
     let redirecturl = "https://httpbin.org/get?test";
     let code = MicrosoftAuth.listenForCode({redirectAfterAuth:redirecturl});
-    let obj = await HttpGet("http://localhost:8080/token?code=" + codeIn, undefined, true);
+    let obj = await HttpGet("http://localhost:8080/token?code=" + codeIn, {}, true);
     expect(await code).toStrictEqual(codeIn);
     expect(obj.url).toStrictEqual(redirecturl);
 })
