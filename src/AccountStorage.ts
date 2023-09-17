@@ -10,7 +10,7 @@ export class AccountsStorage {
 
     }
 
-    getAccount(index:number): Account {
+    getAccount(index:number): Account | undefined {
         return this.accountList[index];
     }
 
