@@ -27,7 +27,6 @@
     "url": "https://github.com/dommilosz/minecraft-auth/issues"
   },
   "dependencies": {
-    "@types/node": "^17.0.21",
     "atob": "^2.1.2",
     "http-client-methods": "^1.0.3"
   },
@@ -38,6 +37,7 @@
     "@tsconfig/node16": "^1.0.3",
     "@types/atob": "^2.1.2",
     "@types/jest": "^27.4.1",
+    "@types/node": "^17.0.21",
     "jest": "^27.5.1",
     "jest-mock": "^27.5.1",
     "nodemon": "^2.0.15",
