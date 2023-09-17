@@ -15,21 +15,15 @@ export class AccountsStorage {
     }
 
     getAccountByUUID(uuid:string): Account | undefined {
-        let acc = undefined;
-        this.accountList.forEach((el: Account) => {
-            if (el.uuid === uuid) {
-                acc = el;
-            }
+        const acc = this.accountList.find((el: Account) => {
+            return el.uuid === uuid;
         })
         return acc;
     }
 
     getAccountByName(name:string): Account | undefined {
-        let acc = undefined;
-        this.accountList.forEach((el: Account) => {
-            if (el.username === name) {
-                acc = el;
-            }
+        const acc = this.accountList.find((el: Account) => {
+            return el.username === name;
         })
         return acc;
     }
