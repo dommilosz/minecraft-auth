@@ -30,13 +30,13 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
     // @ts-ignore
     const server: ListeningHttpServer = http.createServer();
 
-    await server.listen(serverConfig.port, serverConfig.host);
-
-    if (serverConfig.onstart) {
-        serverConfig.onstart(serverConfig.host, serverConfig.port)
-    } else {
-        console.log(`MS Token Server is running on http://${serverConfig.host}:${serverConfig.port}`);
-    }
+    await server.listen(serverConfig.port, serverConfig.host, function() {
+        if (serverConfig.onstart) {
+            serverConfig.onstart(serverConfig.host, serverConfig.port)
+        } else {
+            console.log(`MS Token Server is running on http://${serverConfig.host}:${serverConfig.port}`);
+        }
+    });
 
     server.fullClose = async function (success: boolean) {
         await server.close();
