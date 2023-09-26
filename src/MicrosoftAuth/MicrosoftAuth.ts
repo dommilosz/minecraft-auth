@@ -29,6 +29,7 @@ export function setup(_config: Partial<MSConfigType>) {
 async function createServer(serverConfig: ServerConfigType): Promise<ListeningHttpServer> {
     // @ts-ignore
     const server: ListeningHttpServer = http.createServer();
+    let _success = false;
 
     await server.listen(serverConfig.port, serverConfig.host, function() {
         if (serverConfig.onstart) {
@@ -36,32 +37,35 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
         } else {
             console.log(`MS Token Server is running on http://${serverConfig.host}:${serverConfig.port}`);
         }
+    })
+
+    server.on("close", function() {
+        if (serverConfig.onclose) {
+            serverConfig.onclose(_success);
+        }
     });
 
     server.fullClose = async function (success: boolean) {
-        await server.close();
-        if (serverConfig.onclose) {
-            serverConfig.onclose(success)
+        _success = success;
+
+        if(server.serverTimeout) {
+            clearTimeout(server.serverTimeout)
+            server.serverTimeout = undefined
         }
+
+        await server.close();
     };
+
     return server;
 }
 
 async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerConfigType): Promise<string> {
-    let _timeout:any;
     try {
         return await new Promise<string>((r, j) => {
-            _timeout = setTimeout(async () => {
+            server.serverTimeout = setTimeout(async () => {
                 await server.fullClose(false);
                 j(undefined);
             }, serverConfig.timeout);
-            server.fullClose = async function (success: boolean) {
-                await server.close();
-                clearTimeout(_timeout);
-                if (serverConfig.onclose) {
-                    serverConfig.onclose(success)
-                }
-            };
 
             async function requestListener(req: IncomingMessage, res: ServerResponse) {
                 if(!req.url)return;
