@@ -10,7 +10,10 @@ export type ServerConfigType = {
     port: number,
     host: string,
     redirectAfterAuth?: string,
-    timeout: number
+    timeout: number,
+    onstart?:(host:string, port:number)=>any
+    onclose?:(success:boolean)=>any
+    oncode?:(code:string)=>any
 }
 
 export type TokenResponse = {
