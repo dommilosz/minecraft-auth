@@ -74,7 +74,7 @@ test("Microsoft Auth: Test onclose", async () => {
     expect(callbackExecuted).toBeTruthy();
 })
 
-test("Microsoft Auth: Test oncode ", async () => {
+test("Microsoft Auth: Test oncode", async () => {
     let codeIn = "test_code_123";
     let callbackExecuted = false;
 
@@ -86,6 +86,37 @@ test("Microsoft Auth: Test oncode ", async () => {
     });
     await HttpGet("http://localhost:8080/token?code=" + codeIn);
     await p;
+    await new Promise((r) => setTimeout(r, 500))
+    expect(callbackExecuted).toBeTruthy();
+})
+
+test("Microsoft Auth: Test onstart on error condition", async () => {
+    let callbackExecuted = false;
+
+    MicrosoftAuth.listenForCode({
+        host: "localhost", port: 8080,
+        timeout: 500, onstart: (host, port) => {
+            expect(host).toBe('localhost');
+            expect(port).toBe(8080);
+            callbackExecuted = true;
+        }
+    }).catch(err => {
+
+    });
+
+    await new Promise((r) => setTimeout(r, 100))
+
+    MicrosoftAuth.listenForCode({
+        host: "localhost", port: 8080,
+        timeout: 100, onstart: (host, port) => {
+            expect(false).toBeTruthy();
+        }
+    }).catch(err => {
+
+    });
+
+
+
     await new Promise((r) => setTimeout(r, 500))
     expect(callbackExecuted).toBeTruthy();
 })

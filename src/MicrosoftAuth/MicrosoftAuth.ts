@@ -27,111 +27,113 @@ export function setup(_config: Partial<MSConfigType>) {
 }
 
 async function createServer(serverConfig: ServerConfigType): Promise<ListeningHttpServer> {
-    // @ts-ignore
-    const server: ListeningHttpServer = http.createServer();
-    let _success = false;
+    return await new Promise<any>((r, j) => {
+        // @ts-ignore
+        const server: ListeningHttpServer = http.createServer();
+        let _success = false;
 
-    await server.listen(serverConfig.port, serverConfig.host, function() {
-        if (serverConfig.onstart) {
-            serverConfig.onstart(serverConfig.host, serverConfig.port)
-        } else {
-            console.log(`MS Token Server is running on http://${serverConfig.host}:${serverConfig.port}`);
-        }
+        server.listen(serverConfig.port, serverConfig.host, function () {
+            if (serverConfig.onstart) {
+                serverConfig.onstart(serverConfig.host, serverConfig.port)
+            } else {
+                console.log(`MS Token Server is running on http://${serverConfig.host}:${serverConfig.port}`);
+            }
+        })
+
+        server.on("close", function () {
+            if (serverConfig.onclose) {
+                serverConfig.onclose(_success);
+            }
+            r(undefined);
+        });
+
+        server.on("error", (err) => {
+            j(err);
+        })
+
+        server.fullClose = async function (success: boolean) {
+            _success = success;
+
+            if (server.serverTimeout) {
+                clearTimeout(server.serverTimeout)
+                server.serverTimeout = undefined
+            }
+
+            await server.close();
+        };
+
+        return server;
     })
-
-    server.on("close", function() {
-        if (serverConfig.onclose) {
-            serverConfig.onclose(_success);
-        }
-    });
-
-    server.fullClose = async function (success: boolean) {
-        _success = success;
-
-        if(server.serverTimeout) {
-            clearTimeout(server.serverTimeout)
-            server.serverTimeout = undefined
-        }
-
-        await server.close();
-    };
-
-    return server;
 }
 
 async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerConfigType): Promise<string> {
-    try {
-        return await new Promise<string>((r, j) => {
-            server.serverTimeout = setTimeout(async () => {
-                await server.fullClose(false);
-                j(undefined);
-            }, serverConfig.timeout);
+    return await new Promise<string>((r, j) => {
+        server.serverTimeout = setTimeout(async () => {
+            await server.fullClose(false);
+            j("Timeout error");
+        }, serverConfig.timeout);
 
-            async function requestListener(req: IncomingMessage, res: ServerResponse) {
-                if(!req.url)return;
+        async function requestListener(req: IncomingMessage, res: ServerResponse) {
+            if (!req.url) return;
 
-                switch (req.url.split('?')[0]) {
-                    case '/token':
-                        if (serverConfig.redirectAfterAuth) {
-                            await res.writeHead(301, {
-                                Location: serverConfig.redirectAfterAuth,
-                            });
-                        }
-                        await res.end();
-                        await server.fullClose(true);
-                        if (req.url.includes('?code')) {
-                            let code = req.url.split('?code=')[1];
-                            if(serverConfig.oncode){
-                                serverConfig.oncode(code)
-                            }
-                            r(code);
-                        }
-                        if (req.url.includes('?error')) {
-                            const error = req.url.split('?error=')[1].split('&')[0];
-                            const error_description = decodeURIComponent(
-                                req.url.split('&error_description=')[1]
-                            );
-                            j(new AuthenticationError(error, error_description, ''));
-                        }
-                        break;
-                    case '/url':
-                        await res.writeHead(200);
-                        await res.end(createUrl());
-                        break;
-                    case '/close':
-                        await server.fullClose(false);
-                        j(undefined);
-                        break;
-                    case '/auth':
-                        res.writeHead(302, {
-                            Location: createUrl(),
+            switch (req.url.split('?')[0]) {
+                case '/token':
+                    if (serverConfig.redirectAfterAuth) {
+                        await res.writeHead(301, {
+                            Location: serverConfig.redirectAfterAuth,
                         });
-                        res.end();
-                        break;
-                    default:
-                        res.writeHead(302, {
-                            Location: createUrl(),
-                        });
-                        res.end();
-                        break;
-                }
-                await res.writeHead(404);
-                await res.end();
+                    }
+                    await res.end();
+                    await server.fullClose(true);
+                    if (req.url.includes('?code')) {
+                        let code = req.url.split('?code=')[1];
+                        if (serverConfig.oncode) {
+                            serverConfig.oncode(code)
+                        }
+                        r(code);
+                    }
+                    if (req.url.includes('?error')) {
+                        const error = req.url.split('?error=')[1].split('&')[0];
+                        const error_description = decodeURIComponent(
+                            req.url.split('&error_description=')[1]
+                        );
+                        j(new AuthenticationError(error, error_description, ''));
+                    }
+                    break;
+                case '/url':
+                    await res.writeHead(200);
+                    await res.end(createUrl());
+                    break;
+                case '/close':
+                    await server.fullClose(false);
+                    j(undefined);
+                    break;
+                case '/auth':
+                    res.writeHead(302, {
+                        Location: createUrl(),
+                    });
+                    res.end();
+                    break;
+                default:
+                    res.writeHead(302, {
+                        Location: createUrl(),
+                    });
+                    res.end();
+                    break;
             }
+            await res.writeHead(404);
+            await res.end();
+        }
 
-            server.on('request', requestListener);
-        })
-    }catch (ex){
-        server.fullClose(false);
-        throw ex;
-    }
+        server.on('request', requestListener);
+    })
 }
 
 export async function listenForCode(_serverConfig: Partial<ServerConfigType> = {}): Promise<string> {
     const serverConfig: ServerConfigType = {port: 8080, host: "localhost", timeout: 30 * 1000, ..._serverConfig}
 
     const server = await createServer(serverConfig);
-    return _listenForCode(server, serverConfig);
+    return await _listenForCode(server, serverConfig);
 }
 
 export function createUrl() {
