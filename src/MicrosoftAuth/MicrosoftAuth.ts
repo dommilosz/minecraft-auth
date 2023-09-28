@@ -38,13 +38,14 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
             } else {
                 console.log(`MS Token Server is running on http://${serverConfig.host}:${serverConfig.port}`);
             }
+            r(server);
         })
 
         server.on("close", function () {
             if (serverConfig.onclose) {
                 serverConfig.onclose(_success);
             }
-            r(undefined);
+            r(server);
         });
 
         server.on("error", (err) => {
