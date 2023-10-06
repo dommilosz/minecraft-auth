@@ -45,7 +45,6 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
             if (serverConfig.onclose) {
                 serverConfig.onclose(_success);
             }
-            r(server);
         });
 
         server.on("error", (err) => {
