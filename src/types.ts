@@ -1,6 +1,9 @@
 import http from "http";
 
-export type ListeningHttpServer = http.Server & { fullClose: () => any };
+export type ListeningHttpServer = http.Server & {
+    fullClose: (success:boolean) => any;
+    serverTimeout?: NodeJS.Timeout;
+};
 export type AccountType = "mojang" | "cracked" | "microsoft" | "token";
 
 export class AuthenticationError extends Error {
