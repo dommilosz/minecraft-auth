@@ -26,6 +26,9 @@
   "bugs": {
     "url": "https://github.com/dommilosz/minecraft-auth/issues"
   },
+  "engines": {
+    "node": ">=18.2.0"
+  },
   "dependencies": {
     "atob": "^2.1.2",
     "http-client-methods": "^1.0.4"
