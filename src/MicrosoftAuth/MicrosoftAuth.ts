@@ -59,6 +59,7 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
                 server.serverTimeout = undefined
             }
 
+            server.closeAllConnections()
             await server.close();
         };
 
@@ -105,6 +106,8 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     await res.end(createUrl());
                     break;
                 case '/close':
+                    res.writeHead(200)
+                    res.end()
                     await server.fullClose(false);
                     j(undefined);
                     break;

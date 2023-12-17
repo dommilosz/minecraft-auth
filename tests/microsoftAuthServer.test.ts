@@ -25,6 +25,44 @@ test("Microsoft Auth: /url endpoint", async () => {
     expect(url).toStrictEqual(MicrosoftAuth.createUrl());
 })
 
+test("Microsoft Auth: /close endpoint", async () => {
+    let callbackExecuted = false;
+
+    let p = MicrosoftAuth.listenForCode({
+        timeout: 500,
+        onclose: (success) => {
+            expect(success).toBeFalsy();
+            callbackExecuted = true;
+        }
+    }).catch(_ => {
+    });
+
+    await HttpGet("http://localhost:8080/close");
+    await p;
+
+    expect(callbackExecuted).toBeTruthy();
+})
+
+test("Microsoft Auth: /close endpoint with a keep-alive connection", async () => {
+    let callbackExecuted = false;
+
+    let p = MicrosoftAuth.listenForCode({
+        timeout: 500,
+        onclose: (success) => {
+            expect(success).toBeFalsy();
+            callbackExecuted = true;
+        }
+    }).catch(_ => {
+    });
+
+    await HttpGet("http://localhost:8080/close", {
+        "Connection": "keep-alive"
+    }, true);
+    await p;
+
+    expect(callbackExecuted).toBeTruthy();
+})
+
 test("Microsoft Auth: Redirect test", async () => {
     let code = MicrosoftAuth.listenForCode({timeout: 500}).catch(_ => {
     });
