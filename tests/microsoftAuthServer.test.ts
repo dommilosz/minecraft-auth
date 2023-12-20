@@ -71,6 +71,15 @@ test("Microsoft Auth: Redirect test", async () => {
     expect(obj.url).toStrictEqual(MicrosoftAuth.createUrl());
 })
 
+test("Microsoft Auth: Redirect test - unknown url", async () => {
+    let code = MicrosoftAuth.listenForCode({timeout: 500}).catch(_ => {
+    });
+    let obj = await HttpGet(`http://localhost:8080/asdsada${Math.floor(Math.random()*10000)}`, {}, true);
+    await code;
+    expect(obj.url).toStrictEqual(MicrosoftAuth.createUrl());
+})
+
+
 test("Microsoft Auth: Redirect after authentication", async () => {
     let codeIn = "test_code_123";
     let redirecturl = "https://httpbin.org/get?test";

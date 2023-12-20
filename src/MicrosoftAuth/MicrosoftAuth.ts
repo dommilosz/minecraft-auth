@@ -124,8 +124,6 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     res.end();
                     break;
             }
-            await res.writeHead(404);
-            await res.end();
         }
 
         server.on('request', requestListener);
