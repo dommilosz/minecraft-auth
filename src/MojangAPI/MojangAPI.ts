@@ -19,7 +19,7 @@ export async function getProfileByUUID(uuid: string) {
     let url = `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`;
     let response = await HttpGet(url);
     let jsonResponseEncoded: ProfileResponse = JSON.parse(response);
-    let decodedValue: DecodedTextures = JSON.parse(atob(jsonResponseEncoded.properties[0].value));
+    let decodedValue: DecodedTextures = JSON.parse(Buffer.from(jsonResponseEncoded.properties[0].value,"base64").toString("utf-8"));
 
     let jsonResponse: ProfileResponseDecoded = {
         ...jsonResponseEncoded,
