@@ -30,7 +30,6 @@
     "node": "^18 || ^20"
   },
   "dependencies": {
-    "atob": "^2.1.2",
     "http-client-methods": "^1.0.4"
   },
   "files": [
@@ -38,7 +37,6 @@
   ],
   "devDependencies": {
     "@tsconfig/node16": "^16.1.1",
-    "@types/atob": "^2.1.2",
     "@types/jest": "^29.5.5",
     "@types/node": "^20.8.3",
     "jest": "^29.7.0",
