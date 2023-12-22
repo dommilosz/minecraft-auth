@@ -59,7 +59,6 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
                 server.serverTimeout = undefined
             }
 
-            server.closeAllConnections()
             await server.close();
         };
 
@@ -76,6 +75,8 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
 
         async function requestListener(req: IncomingMessage, res: ServerResponse) {
             if (!req.url) return;
+
+            res.setHeader("Connection", "close")
 
             switch (req.url.split('?')[0]) {
                 case '/token':

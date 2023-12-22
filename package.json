@@ -27,7 +27,7 @@
     "url": "https://github.com/dommilosz/minecraft-auth/issues"
   },
   "engines": {
-    "node": ">=18.2.0"
+    "node": "^18 || ^20"
   },
   "dependencies": {
     "atob": "^2.1.2",
