@@ -1,7 +1,8 @@
 import http from "http";
 
 export type ListeningHttpServer = http.Server & {
-    fullClose: (success:boolean) => any;
+    abort?: () => void;
+    fullClose: (success:boolean) => void;
     serverTimeout?: NodeJS.Timeout;
 };
 export type AccountType = "mojang" | "cracked" | "microsoft" | "token";

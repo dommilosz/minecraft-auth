@@ -51,15 +51,19 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
             j(err);
         })
 
-        server.fullClose = async function (success: boolean) {
+        server.fullClose = function (success: boolean) {
             _success = success;
+
+            if(server.abort) {
+                serverConfig.abort?.removeEventListener("abort", server.abort)
+            }
 
             if (server.serverTimeout) {
                 clearTimeout(server.serverTimeout)
                 server.serverTimeout = undefined
             }
 
-            await server.close();
+            server.close();
         };
 
         return server;
@@ -69,9 +73,22 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
 async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerConfigType): Promise<string> {
     return await new Promise<string>((r, j) => {
         server.serverTimeout = setTimeout(async () => {
-            await server.fullClose(false);
+            server.fullClose(false);
             j("Timeout error");
         }, serverConfig.timeout);
+
+        if(serverConfig.abort) {
+            server.abort = function() {
+                server.fullClose(false)
+                j("Aborted")
+            }
+
+            if(serverConfig.abort.aborted) {
+                server.abort()
+            } else {
+                serverConfig.abort.addEventListener("abort", server.abort)
+            }
+        }
 
         async function requestListener(req: IncomingMessage, res: ServerResponse) {
             if (!req.url) return;
@@ -81,12 +98,12 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
             switch (req.url.split('?')[0]) {
                 case '/token':
                     if (serverConfig.redirectAfterAuth) {
-                        await res.writeHead(301, {
+                        res.writeHead(301, {
                             Location: serverConfig.redirectAfterAuth,
                         });
                     }
-                    await res.end();
-                    await server.fullClose(true);
+                    res.end();
+                    server.fullClose(true);
                     if (req.url.includes('?code')) {
                         let code = req.url.split('?code=')[1];
                         if (serverConfig.oncode) {
@@ -103,14 +120,14 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     }
                     break;
                 case '/url':
-                    await res.writeHead(200);
-                    await res.end(createUrl());
+                    res.writeHead(200);
+                    res.end(createUrl());
                     break;
                 case '/close':
                     res.writeHead(200)
                     res.end()
-                    await server.fullClose(false);
-                    j(undefined);
+                    server.fullClose(false);
+                    j("Closed");
                     break;
                 case '/auth':
                     res.writeHead(302, {
