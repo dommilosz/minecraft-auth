@@ -128,7 +128,7 @@ test("Microsoft Auth: Test onstart on error condition", async () => {
 
     await expect(MicrosoftAuth.listenForCode({
         onstart: secondOnStart
-    })).rejects.toThrowError("listen EADDRINUSE: address already in use 127.0.0.1:8080")
+    })).rejects.toThrowError(/listen EADDRINUSE: address already in use (127.0.0.1|::1):8080/)
 
     expect(onStart).toBeCalledTimes(1)
     expect(onStart).toBeCalledWith("localhost", 8080)
