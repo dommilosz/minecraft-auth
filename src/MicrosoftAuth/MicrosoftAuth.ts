@@ -127,7 +127,7 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     res.writeHead(200)
                     res.end()
                     server.fullClose(false);
-                    j(undefined);
+                    j("Closed");
                     break;
                 case '/auth':
                     res.writeHead(302, {

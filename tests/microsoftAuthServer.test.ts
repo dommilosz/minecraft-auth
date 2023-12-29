@@ -1,169 +1,139 @@
 import {HttpGet} from "http-client-methods";
 import {MicrosoftAuth} from "../src/index"
 
+const redirectUrl = "https://httpbin.org/get?test";
+const timeout = 1000
+const onClose = jest.fn()
+const onStart = jest.fn()
+const onCode = jest.fn()
+
+let abortController: AbortController
+let listenForCodePromise: Promise<string>
+
+beforeEach(function() {
+    abortController = new AbortController()
+    listenForCodePromise = MicrosoftAuth.listenForCode({
+        abort: abortController.signal,
+        redirectAfterAuth: redirectUrl,
+        timeout: timeout,
+        onclose: onClose,
+        onstart: onStart,
+        oncode: onCode,
+    })
+})
+
+afterEach(function() {
+    listenForCodePromise.catch(() => {})
+
+    abortController.abort()
+})
+
 test("Microsoft Auth: Code test", async () => {
-    let codeIn = "test_code_123";
-    let code = MicrosoftAuth.listenForCode();
-    await HttpGet("http://localhost:8080/token?code=" + codeIn);
-    expect(await code).toStrictEqual(codeIn);
+    const codeIn = "test_code_123"
+
+    await HttpGet(`http://localhost:8080/token?code=${codeIn}`)
+
+    await expect(listenForCodePromise).resolves.toBe(codeIn)
 })
 
 test("Microsoft Auth: Server timeout", async () => {
-    try {
-        await MicrosoftAuth.listenForCode({timeout: 100})
-    } catch {
-        expect(true)
-    }
-    expect(false)
+    await expect(listenForCodePromise).rejects.toBe("Timeout error")
 })
 
 test("Microsoft Auth: /url endpoint", async () => {
-    let code = MicrosoftAuth.listenForCode({timeout: 500}).catch(_ => {
-    });
-    let url = await HttpGet("http://localhost:8080/url");
-    await code;
-    expect(url).toStrictEqual(MicrosoftAuth.createUrl());
+    const url = await HttpGet("http://localhost:8080/url")
+
+    expect(url).toBe(MicrosoftAuth.createUrl())
 })
 
 test("Microsoft Auth: /close endpoint", async () => {
-    let callbackExecuted = false;
+    const matcher = expect(listenForCodePromise).rejects.toBe("Closed")
 
-    let p = MicrosoftAuth.listenForCode({
-        timeout: 500,
-        onclose: (success) => {
-            expect(success).toBeFalsy();
-            callbackExecuted = true;
-        }
-    }).catch(_ => {
-    });
+    await HttpGet("http://localhost:8080/close")
+    await matcher
 
-    await HttpGet("http://localhost:8080/close");
-    await p;
+    expect(onCode).toBeCalledTimes(0)
 
-    expect(callbackExecuted).toBeTruthy();
+    expect(onClose).toBeCalledTimes(1)
+    expect(onClose).toBeCalledWith(false)
 })
 
 test("Microsoft Auth: /close endpoint with a keep-alive connection", async () => {
-    let callbackExecuted = false;
-
-    let p = MicrosoftAuth.listenForCode({
-        timeout: 500,
-        onclose: (success) => {
-            expect(success).toBeFalsy();
-            callbackExecuted = true;
-        }
-    }).catch(_ => {
-    });
+    const matcher = expect(listenForCodePromise).rejects.toBe("Closed")
 
     await HttpGet("http://localhost:8080/close", {
         "Connection": "keep-alive"
-    }, true);
-    await p;
+    })
 
-    expect(callbackExecuted).toBeTruthy();
+    await matcher
+
+    expect(onCode).toBeCalledTimes(0)
+
+    expect(onClose).toBeCalledTimes(1)
+    expect(onClose).toBeCalledWith(false)
 })
 
 test("Microsoft Auth: Redirect test", async () => {
-    let code = MicrosoftAuth.listenForCode({timeout: 500}).catch(_ => {
-    });
-    let obj = await HttpGet("http://localhost:8080/auth", {}, true);
-    await code;
-    expect(obj.url).toStrictEqual(MicrosoftAuth.createUrl());
+    const res = await HttpGet("http://localhost:8080/auth", {}, true)
+
+    expect(res.url).toBe(MicrosoftAuth.createUrl())
 })
 
 test("Microsoft Auth: Redirect test - unknown url", async () => {
-    let code = MicrosoftAuth.listenForCode({timeout: 500}).catch(_ => {
-    });
-    let obj = await HttpGet(`http://localhost:8080/asdsada${Math.floor(Math.random()*10000)}`, {}, true);
-    await code;
-    expect(obj.url).toStrictEqual(MicrosoftAuth.createUrl());
+    const res = await HttpGet(`http://localhost:8080/asdsada${Math.floor(Math.random()*10000)}`, {}, true)
+
+    expect(res.url).toBe(MicrosoftAuth.createUrl())
 })
 
-
 test("Microsoft Auth: Redirect after authentication", async () => {
-    let codeIn = "test_code_123";
-    let redirecturl = "https://httpbin.org/get?test";
-    let code = MicrosoftAuth.listenForCode({redirectAfterAuth: redirecturl});
-    let obj = await HttpGet("http://localhost:8080/token?code=" + codeIn, {}, true);
-    expect(await code).toStrictEqual(codeIn);
-    expect(obj.url).toStrictEqual(redirecturl);
+    const codeIn = "test_code_123"
+    const res = await HttpGet(`http://localhost:8080/token?code=${codeIn}`, {}, true)
+
+    expect(res.url).toBe(redirectUrl)
 })
 
 test("Microsoft Auth: Test onstart", async () => {
-    let callbackExecuted = false;
+    await expect(listenForCodePromise).rejects.toBe("Timeout error")
 
-    await MicrosoftAuth.listenForCode({
-        host: "localhost", port: 8080,
-        timeout: 500, onstart: (host, port) => {
-            expect(host).toBe('localhost');
-            expect(port).toBe(8080);
-            callbackExecuted = true;
-        }
-    }).catch(_ => {
-    });
-
-    expect(callbackExecuted).toBeTruthy();
+    expect(onStart).toBeCalledTimes(1)
+    expect(onStart).toBeCalledWith("localhost", 8080)
 })
 
 test("Microsoft Auth: Test onclose", async () => {
-    let callbackExecuted = false;
+    await expect(listenForCodePromise).rejects.toBe("Timeout error")
 
-    await MicrosoftAuth.listenForCode({
-        timeout: 200, onclose: (success) => {
-            expect(success).toBeFalsy()
-            callbackExecuted = true;
-        }
-    }).catch(_ => {
-    });
-
-    await new Promise((r) => setTimeout(r, 500))
-
-    expect(callbackExecuted).toBeTruthy();
+    expect(onClose).toBeCalledTimes(1)
+    expect(onClose).toBeCalledWith(false)
 })
 
 test("Microsoft Auth: Test oncode", async () => {
-    let codeIn = "test_code_123";
-    let callbackExecuted = false;
+    const codeIn = "test_code_123"
 
-    let p = MicrosoftAuth.listenForCode({
-        oncode: (code) => {
-            expect(code).toStrictEqual(codeIn);
-            callbackExecuted = true;
-        }
-    });
-    await HttpGet("http://localhost:8080/token?code=" + codeIn);
-    await p;
-    await new Promise((r) => setTimeout(r, 500))
-    expect(callbackExecuted).toBeTruthy();
+    await HttpGet(`http://localhost:8080/token?code=${codeIn}`)
+
+    await expect(listenForCodePromise).resolves.toBe(codeIn)
+
+    expect(onCode).toBeCalledTimes(1)
+    expect(onCode).toBeCalledWith(codeIn)
 })
 
 test("Microsoft Auth: Test onstart on error condition", async () => {
-    let callbackExecuted = false;
+    const secondOnStart = jest.fn()
 
-    MicrosoftAuth.listenForCode({
-        host: "localhost", port: 8080,
-        timeout: 500, onstart: (host, port) => {
-            expect(host).toBe('localhost');
-            expect(port).toBe(8080);
-            callbackExecuted = true;
-        }
-    }).catch(err => {
+    await expect(MicrosoftAuth.listenForCode({
+        onstart: secondOnStart
+    })).rejects.toThrowError("listen EADDRINUSE: address already in use 127.0.0.1:8080")
 
-    });
+    expect(onStart).toBeCalledTimes(1)
+    expect(onStart).toBeCalledWith("localhost", 8080)
 
-    await new Promise((r) => setTimeout(r, 100))
+    expect(secondOnStart).not.toBeCalled()
+})
 
-    MicrosoftAuth.listenForCode({
-        host: "localhost", port: 8080,
-        timeout: 100, onstart: (host, port) => {
-            expect(false).toBeTruthy();
-        }
-    }).catch(err => {
+test("Microsoft Auth: Can be aborted", async () => {
+    const matcher = expect(listenForCodePromise).rejects.toBe("Aborted")
 
-    });
+    abortController.abort()
 
-
-
-    await new Promise((r) => setTimeout(r, 500))
-    expect(callbackExecuted).toBeTruthy();
+    await matcher
 })
