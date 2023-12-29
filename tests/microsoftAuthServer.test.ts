@@ -1,11 +1,15 @@
 import {HttpGet} from "http-client-methods";
 import {MicrosoftAuth} from "../src/index"
 
+const host = "127.0.0.1"
+const port = 8080
 const redirectUrl = "https://httpbin.org/get?test";
 const timeout = 1000
 const onClose = jest.fn()
 const onStart = jest.fn()
 const onCode = jest.fn()
+
+const baseUrl = `http://${host}:${port}`
 
 let abortController: AbortController
 let listenForCodePromise: Promise<string>
@@ -18,6 +22,8 @@ beforeEach(function() {
     })
     listenForCodePromise = MicrosoftAuth.listenForCode({
         abort: abortController.signal,
+        host: host,
+        port: port,
         redirectAfterAuth: redirectUrl,
         timeout: timeout,
         onclose: onClose,
@@ -37,7 +43,7 @@ afterEach(async function() {
 test("Microsoft Auth: Code test", async () => {
     const codeIn = "test_code_123"
 
-    await HttpGet(`http://localhost:8080/token?code=${codeIn}`)
+    await HttpGet(`${baseUrl}/token?code=${codeIn}`)
 
     await expect(listenForCodePromise).resolves.toBe(codeIn)
 })
@@ -47,7 +53,7 @@ test("Microsoft Auth: Server timeout", async () => {
 })
 
 test("Microsoft Auth: /url endpoint", async () => {
-    const url = await HttpGet("http://localhost:8080/url")
+    const url = await HttpGet(`${baseUrl}/url`)
 
     expect(url).toBe(MicrosoftAuth.createUrl())
 })
@@ -55,7 +61,7 @@ test("Microsoft Auth: /url endpoint", async () => {
 test("Microsoft Auth: /close endpoint", async () => {
     const matcher = expect(listenForCodePromise).rejects.toBe("Closed")
 
-    await HttpGet("http://localhost:8080/close")
+    await HttpGet(`${baseUrl}/close`)
     await matcher
 
     expect(onCode).toBeCalledTimes(0)
@@ -67,7 +73,7 @@ test("Microsoft Auth: /close endpoint", async () => {
 test("Microsoft Auth: /close endpoint with a keep-alive connection", async () => {
     const matcher = expect(listenForCodePromise).rejects.toBe("Closed")
 
-    await HttpGet("http://localhost:8080/close", {
+    await HttpGet(`${baseUrl}/close`, {
         "Connection": "keep-alive"
     })
 
@@ -80,20 +86,20 @@ test("Microsoft Auth: /close endpoint with a keep-alive connection", async () =>
 })
 
 test("Microsoft Auth: Redirect test", async () => {
-    const res = await HttpGet("http://localhost:8080/auth", {}, true)
+    const res = await HttpGet(`${baseUrl}/auth`, {}, true)
 
     expect(res.url).toBe(MicrosoftAuth.createUrl())
 })
 
 test("Microsoft Auth: Redirect test - unknown url", async () => {
-    const res = await HttpGet(`http://localhost:8080/asdsada${Math.floor(Math.random()*10000)}`, {}, true)
+    const res = await HttpGet(`${baseUrl}/asdsada${Math.floor(Math.random()*10000)}`, {}, true)
 
     expect(res.url).toBe(MicrosoftAuth.createUrl())
 })
 
 test("Microsoft Auth: Redirect after authentication", async () => {
     const codeIn = "test_code_123"
-    const res = await HttpGet(`http://localhost:8080/token?code=${codeIn}`, {}, true)
+    const res = await HttpGet(`${baseUrl}/token?code=${codeIn}`, {}, true)
 
     expect(res.url).toBe(redirectUrl)
 })
@@ -102,7 +108,7 @@ test("Microsoft Auth: Test onstart", async () => {
     await expect(listenForCodePromise).rejects.toBe("Timeout error")
 
     expect(onStart).toBeCalledTimes(1)
-    expect(onStart).toBeCalledWith("localhost", 8080)
+    expect(onStart).toBeCalledWith(host, port)
 })
 
 test("Microsoft Auth: Test onclose", async () => {
@@ -115,7 +121,7 @@ test("Microsoft Auth: Test onclose", async () => {
 test("Microsoft Auth: Test oncode", async () => {
     const codeIn = "test_code_123"
 
-    await HttpGet(`http://localhost:8080/token?code=${codeIn}`)
+    await HttpGet(`${baseUrl}/token?code=${codeIn}`)
 
     await expect(listenForCodePromise).resolves.toBe(codeIn)
 
@@ -127,11 +133,13 @@ test("Microsoft Auth: Test onstart on error condition", async () => {
     const secondOnStart = jest.fn()
 
     await expect(MicrosoftAuth.listenForCode({
+        host: host,
+        port: port,
         onstart: secondOnStart
-    })).rejects.toThrowError(/listen EADDRINUSE: address already in use (127.0.0.1|::1):8080/)
+    })).rejects.toThrowError(`listen EADDRINUSE: address already in use ${host}:${port}`)
 
     expect(onStart).toBeCalledTimes(1)
-    expect(onStart).toBeCalledWith("localhost", 8080)
+    expect(onStart).toBeCalledWith(host, port)
 
     expect(secondOnStart).not.toBeCalled()
 })
