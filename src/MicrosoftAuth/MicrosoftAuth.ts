@@ -54,6 +54,10 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
         server.fullClose = function (success: boolean) {
             _success = success;
 
+            if(server.abort) {
+                serverConfig.abort?.removeEventListener("abort", server.abort)
+            }
+
             if (server.serverTimeout) {
                 clearTimeout(server.serverTimeout)
                 server.serverTimeout = undefined
@@ -72,6 +76,19 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
             server.fullClose(false);
             j("Timeout error");
         }, serverConfig.timeout);
+
+        if(serverConfig.abort) {
+            server.abort = function() {
+                server.fullClose(false)
+                j("Aborted")
+            }
+
+            if(serverConfig.abort.aborted) {
+                server.abort()
+            } else {
+                serverConfig.abort.addEventListener("abort", server.abort)
+            }
+        }
 
         async function requestListener(req: IncomingMessage, res: ServerResponse) {
             if (!req.url) return;

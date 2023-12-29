@@ -1,6 +1,7 @@
 import http from "http";
 
 export type ListeningHttpServer = http.Server & {
+    abort?: () => void;
     fullClose: (success:boolean) => void;
     serverTimeout?: NodeJS.Timeout;
 };

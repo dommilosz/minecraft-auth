@@ -7,6 +7,7 @@ export type MSConfigType = {
 }
 
 export type ServerConfigType = {
+    abort?: AbortSignal;
     port: number,
     host: string,
     redirectAfterAuth?: string,
