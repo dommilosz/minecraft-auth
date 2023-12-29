@@ -51,7 +51,7 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
             j(err);
         })
 
-        server.fullClose = async function (success: boolean) {
+        server.fullClose = function (success: boolean) {
             _success = success;
 
             if (server.serverTimeout) {
@@ -59,7 +59,7 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
                 server.serverTimeout = undefined
             }
 
-            await server.close();
+            server.close();
         };
 
         return server;
@@ -69,7 +69,7 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
 async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerConfigType): Promise<string> {
     return await new Promise<string>((r, j) => {
         server.serverTimeout = setTimeout(async () => {
-            await server.fullClose(false);
+            server.fullClose(false);
             j("Timeout error");
         }, serverConfig.timeout);
 
@@ -81,12 +81,12 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
             switch (req.url.split('?')[0]) {
                 case '/token':
                     if (serverConfig.redirectAfterAuth) {
-                        await res.writeHead(301, {
+                        res.writeHead(301, {
                             Location: serverConfig.redirectAfterAuth,
                         });
                     }
-                    await res.end();
-                    await server.fullClose(true);
+                    res.end();
+                    server.fullClose(true);
                     if (req.url.includes('?code')) {
                         let code = req.url.split('?code=')[1];
                         if (serverConfig.oncode) {
@@ -103,13 +103,13 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     }
                     break;
                 case '/url':
-                    await res.writeHead(200);
-                    await res.end(createUrl());
+                    res.writeHead(200);
+                    res.end(createUrl());
                     break;
                 case '/close':
                     res.writeHead(200)
                     res.end()
-                    await server.fullClose(false);
+                    server.fullClose(false);
                     j(undefined);
                     break;
                 case '/auth':
