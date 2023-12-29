@@ -9,9 +9,13 @@ const onCode = jest.fn()
 
 let abortController: AbortController
 let listenForCodePromise: Promise<string>
+let closePromise: Promise<void>
 
 beforeEach(function() {
     abortController = new AbortController()
+    closePromise = new Promise<void>(function(resolve) {
+        onClose.mockImplementationOnce(resolve)
+    })
     listenForCodePromise = MicrosoftAuth.listenForCode({
         abort: abortController.signal,
         redirectAfterAuth: redirectUrl,
@@ -22,10 +26,12 @@ beforeEach(function() {
     })
 })
 
-afterEach(function() {
+afterEach(async function() {
     listenForCodePromise.catch(() => {})
 
     abortController.abort()
+
+    await closePromise
 })
 
 test("Microsoft Auth: Code test", async () => {
@@ -131,9 +137,7 @@ test("Microsoft Auth: Test onstart on error condition", async () => {
 })
 
 test("Microsoft Auth: Can be aborted", async () => {
-    const matcher = expect(listenForCodePromise).rejects.toBe("Aborted")
-
     abortController.abort()
 
-    await matcher
+    await expect(listenForCodePromise).rejects.toBe("Aborted")
 })
