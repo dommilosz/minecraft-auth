@@ -202,7 +202,12 @@ export async function getToken(authCode: string, PKCEPair?:PKCEPairType) {
         body += `&code_verifier=${encodedVerifier}&code_challenge_method=S256`;
     }
 
-    let response = await HttpPost(url, body, {"Content-Type": "application/x-www-form-urlencoded", "Origin":config.redirectURL})
+    let headers:any = {"Content-Type": "application/x-www-form-urlencoded"};
+    if(config.mode === "SPA"){
+        headers["Origin"]= config.redirectURL;
+    }
+
+    let response = await HttpPost(url, body, headers)
 
     let jsonResponse: TokenResponse = JSON.parse(response);
     if (jsonResponse.error) {
@@ -234,10 +239,12 @@ export async function getTokenRefresh(refreshToken:string) {
         body = `client_id=${encodedID}&client_secret=${encodedSecret}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${encodedUrl}`
     }
 
-    const response = await HttpPost(url, body, {
-        "Origin":config.redirectURL,
-        'Content-Type': 'application/x-www-form-urlencoded',
-    });
+    let headers:any = {"Content-Type": "application/x-www-form-urlencoded"};
+    if(config.mode === "SPA"){
+        headers["Origin"]= config.redirectURL;
+    }
+
+    const response = await HttpPost(url, body, headers);
 
     const jsonResponse: TokenResponse = JSON.parse(response);
     if (jsonResponse.error) {
