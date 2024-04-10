@@ -22,3 +22,5 @@ export class OwnershipError extends Error {
         super(_error);
     }
 }
+
+export type PKCEPairType = {verifier:string, challenge:string};

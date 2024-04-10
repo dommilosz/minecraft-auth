@@ -1,3 +1,5 @@
+import {PKCEPairType} from "../types";
+
 export type MSConfigType = {
     appID: string,
     appSecret?:string
@@ -15,6 +17,7 @@ export type ServerConfigType = {
     onstart?:(host:string, port:number)=>any
     onclose?:(success:boolean)=>any
     oncode?:(code:string)=>any
+    pkcePair?:PKCEPairType
 }
 
 export type TokenResponse = {
@@ -35,6 +38,8 @@ export type MCTokenResponse = {
     access_token: string;
     token_type: string;
     expires_in: 86400;
+    path:string,
+    errorMessage:string,
 };
 export type XBLResponse = {
     IssueInstant: string;

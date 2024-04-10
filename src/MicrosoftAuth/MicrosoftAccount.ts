@@ -1,4 +1,4 @@
-import {AuthenticationError} from "../types";
+import {AuthenticationError, PKCEPairType} from "../types";
 import * as MicrosoftAuth from "./MicrosoftAuth";
 import {Account} from "../Account";
 
@@ -20,9 +20,9 @@ export class MicrosoftAccount extends Account {
         return this.accessToken;
     }
 
-    async authFlow(authCode:string) {
+    async authFlow(authCode:string, PKCEPair:PKCEPairType) {
         this.authCode = authCode;
-        let resp = await MicrosoftAuth.authFlow(this.authCode);
+        let resp = await MicrosoftAuth.authFlow(this.authCode, PKCEPair);
         this.refreshToken = resp.refresh_token;
         this.accessToken = resp.access_token;
         return this.accessToken;

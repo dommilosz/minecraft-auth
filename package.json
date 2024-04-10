@@ -1,6 +1,6 @@
 {
   "name": "minecraft-auth",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Package to authenticate with minecraft using traditional yggdrasil, new microsoft authentication and non-premium.",
   "main": "dist/index.js",
   "scripts": {

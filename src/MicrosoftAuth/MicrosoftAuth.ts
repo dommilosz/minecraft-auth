@@ -8,7 +8,9 @@ import {
     XBLResponse,
     XSTSResponse
 } from "./MicrosoftAuth.types";
-import {AuthenticationError, ListeningHttpServer} from "../types";
+import {AuthenticationError, ListeningHttpServer, PKCEPairType} from "../types";
+
+import {createHash, randomBytes} from "node:crypto";
 
 let config: MSConfigType = {
     scope: "XboxLive.signin offline_access",
@@ -121,7 +123,7 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     break;
                 case '/url':
                     res.writeHead(200);
-                    res.end(createUrl());
+                    res.end(createUrl(serverConfig.pkcePair));
                     break;
                 case '/close':
                     res.writeHead(200)
@@ -131,13 +133,13 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
                     break;
                 case '/auth':
                     res.writeHead(302, {
-                        Location: createUrl(),
+                        Location: createUrl(serverConfig.pkcePair),
                     });
                     res.end();
                     break;
                 default:
                     res.writeHead(302, {
-                        Location: createUrl(),
+                        Location: createUrl(serverConfig.pkcePair),
                     });
                     res.end();
                     break;
@@ -155,19 +157,33 @@ export async function listenForCode(_serverConfig: Partial<ServerConfigType> = {
     return await _listenForCode(server, serverConfig);
 }
 
-export function createUrl() {
+export function generatePKCEPair():PKCEPairType {
+    const NUM_OF_BYTES = 32;
+    const HASH_ALG = "sha256";
+    const randomVerifier = randomBytes(NUM_OF_BYTES).toString('hex')
+    const hash = createHash(HASH_ALG).update(randomVerifier).digest('base64');
+    const challenge = hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // Clean base64 to make it URL safe
+    return {verifier: randomVerifier, challenge}
+}
+
+export function createUrl(PKCEPair?:PKCEPairType) {
     let encodedID = encodeURIComponent(config.appID ?? "");
     let encodedUrl = encodeURIComponent(config.redirectURL);
     let encodedScope = encodeURIComponent(config.scope);
 
-    return `https://login.live.com/oauth20_authorize.srf?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}`;
+    if(PKCEPair){
+        let encodedChallenge = encodeURIComponent(PKCEPair.challenge);
+        return `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}&code_challenge=${encodedChallenge}&code_challenge_method=S256`;
+    }
+
+    return `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}`;
 }
 
-export async function getToken(authCode: string) {
+export async function getToken(authCode: string, PKCEPair?:PKCEPairType) {
     let encodedID = encodeURIComponent(config.appID);
     let encodedUrl = encodeURIComponent(config.redirectURL);
 
-    let url = 'https://login.live.com/oauth20_token.srf';
+    let url = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
     let body = `client_id=${encodedID}&code=${authCode}&grant_type=authorization_code&redirect_uri=${encodedUrl}`;
 
     if (config.mode === "Web") {
@@ -181,7 +197,12 @@ export async function getToken(authCode: string) {
         body = `client_id=${encodedID}&client_secret=${encodedSecret}&code=${authCode}&grant_type=authorization_code&redirect_uri=${encodedUrl}`
     }
 
-    let response = await HttpPost(url, body, {"Content-Type": "application/x-www-form-urlencoded"})
+    if(PKCEPair){
+        let encodedVerifier = encodeURIComponent(PKCEPair.verifier);
+        body += `&code_verifier=${encodedVerifier}&code_challenge_method=S256`;
+    }
+
+    let response = await HttpPost(url, body, {"Content-Type": "application/x-www-form-urlencoded", "Origin":config.redirectURL})
 
     let jsonResponse: TokenResponse = JSON.parse(response);
     if (jsonResponse.error) {
@@ -214,6 +235,7 @@ export async function getTokenRefresh(refreshToken:string) {
     }
 
     const response = await HttpPost(url, body, {
+        "Origin":config.redirectURL,
         'Content-Type': 'application/x-www-form-urlencoded',
     });
 
@@ -298,11 +320,16 @@ export async function getMinecraftToken(xstsToken:string, uhs:string) {
     );
 
     const jsonResponse: MCTokenResponse = JSON.parse(response);
+
+    if(jsonResponse.errorMessage){
+        throw new AuthenticationError("Error when getting minecraft token",jsonResponse.errorMessage, jsonResponse.path)
+    }
+
     return jsonResponse;
 }
 
-export async function authFlow(authCode:string) {
-    const tokenRes = await getToken(authCode);
+export async function authFlow(authCode:string, PKCEPair?:PKCEPairType) {
+    const tokenRes = await getToken(authCode, PKCEPair);
     return await authFlowXBL(tokenRes.access_token, tokenRes.refresh_token);
 }
 

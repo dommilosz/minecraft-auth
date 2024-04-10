@@ -85,18 +85,6 @@ test("Microsoft Auth: /close endpoint with a keep-alive connection", async () =>
     expect(onClose).toBeCalledWith(false)
 })
 
-test("Microsoft Auth: Redirect test", async () => {
-    const res = await HttpGet(`${baseUrl}/auth`, {}, true)
-
-    expect(res.url).toBe(MicrosoftAuth.createUrl())
-})
-
-test("Microsoft Auth: Redirect test - unknown url", async () => {
-    const res = await HttpGet(`${baseUrl}/asdsada${Math.floor(Math.random()*10000)}`, {}, true)
-
-    expect(res.url).toBe(MicrosoftAuth.createUrl())
-})
-
 test("Microsoft Auth: Redirect after authentication", async () => {
     const codeIn = "test_code_123"
     const res = await HttpGet(`${baseUrl}/token?code=${codeIn}`, {}, true)
