@@ -5,7 +5,8 @@ export type MSConfigType = {
     appSecret?:string
     redirectURL: string,
     scope: string,
-    mode:"SPA"|"Web"
+    mode:"SPA"|"Web",
+    selectAccount:boolean
 }
 
 export type ServerConfigType = {

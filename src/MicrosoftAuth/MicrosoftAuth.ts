@@ -16,15 +16,15 @@ let config: MSConfigType = {
     scope: "XboxLive.signin offline_access",
     redirectURL: "http://localhost:8080/token",
     appID: "747bf062-ab9c-4690-842d-a77d18d4cf82",
-    mode: "SPA",
+    mode: "SPA", selectAccount: false
 }
 
 
 export function setup(_config: Partial<MSConfigType>) {
-    if(_config.appSecret){
-        config = {...config,mode:"Web",..._config};
-    }else{
-        config = {...config,mode:"SPA",..._config};
+    if (_config.appSecret) {
+        config = {...config, mode: "Web", ..._config};
+    } else {
+        config = {...config, mode: "SPA", ..._config};
     }
 }
 
@@ -56,7 +56,7 @@ async function createServer(serverConfig: ServerConfigType): Promise<ListeningHt
         server.fullClose = function (success: boolean) {
             _success = success;
 
-            if(server.abort) {
+            if (server.abort) {
                 serverConfig.abort?.removeEventListener("abort", server.abort)
             }
 
@@ -79,13 +79,13 @@ async function _listenForCode(server: ListeningHttpServer, serverConfig: ServerC
             j("Timeout error");
         }, serverConfig.timeout);
 
-        if(serverConfig.abort) {
-            server.abort = function() {
+        if (serverConfig.abort) {
+            server.abort = function () {
                 server.fullClose(false)
                 j("Aborted")
             }
 
-            if(serverConfig.abort.aborted) {
+            if (serverConfig.abort.aborted) {
                 server.abort()
             } else {
                 serverConfig.abort.addEventListener("abort", server.abort)
@@ -157,7 +157,7 @@ export async function listenForCode(_serverConfig: Partial<ServerConfigType> = {
     return await _listenForCode(server, serverConfig);
 }
 
-export function generatePKCEPair():PKCEPairType {
+export function generatePKCEPair(): PKCEPairType {
     const NUM_OF_BYTES = 32;
     const HASH_ALG = "sha256";
     const randomVerifier = randomBytes(NUM_OF_BYTES).toString('hex')
@@ -166,20 +166,26 @@ export function generatePKCEPair():PKCEPairType {
     return {verifier: randomVerifier, challenge}
 }
 
-export function createUrl(PKCEPair?:PKCEPairType) {
+export function createUrl(PKCEPair?: PKCEPairType) {
     let encodedID = encodeURIComponent(config.appID ?? "");
     let encodedUrl = encodeURIComponent(config.redirectURL);
     let encodedScope = encodeURIComponent(config.scope);
 
-    if(PKCEPair){
+    let url = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}`;
+
+    if (PKCEPair) {
         let encodedChallenge = encodeURIComponent(PKCEPair.challenge);
-        return `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}&code_challenge=${encodedChallenge}&code_challenge_method=S256`;
+        url += `&code_challenge=${encodedChallenge}&code_challenge_method=S256`;
     }
 
-    return `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${encodedID}&response_type=code&redirect_uri=${encodedUrl}&scope=${encodedScope}`;
+    if (config.selectAccount) {
+        url += `&prompt=select_account`;
+    }
+
+    return url;
 }
 
-export async function getToken(authCode: string, PKCEPair?:PKCEPairType) {
+export async function getToken(authCode: string, PKCEPair?: PKCEPairType) {
     let encodedID = encodeURIComponent(config.appID);
     let encodedUrl = encodeURIComponent(config.redirectURL);
 
@@ -197,14 +203,14 @@ export async function getToken(authCode: string, PKCEPair?:PKCEPairType) {
         body = `client_id=${encodedID}&client_secret=${encodedSecret}&code=${authCode}&grant_type=authorization_code&redirect_uri=${encodedUrl}`
     }
 
-    if(PKCEPair){
+    if (PKCEPair) {
         let encodedVerifier = encodeURIComponent(PKCEPair.verifier);
         body += `&code_verifier=${encodedVerifier}&code_challenge_method=S256`;
     }
 
-    let headers:any = {"Content-Type": "application/x-www-form-urlencoded"};
-    if(config.mode === "SPA"){
-        headers["Origin"]= config.redirectURL;
+    let headers: any = {"Content-Type": "application/x-www-form-urlencoded"};
+    if (config.mode === "SPA") {
+        headers["Origin"] = config.redirectURL;
     }
 
     let response = await HttpPost(url, body, headers)
@@ -221,15 +227,15 @@ export async function getToken(authCode: string, PKCEPair?:PKCEPairType) {
     return jsonResponse;
 }
 
-export async function getTokenRefresh(refreshToken:string) {
-    let encodedID = encodeURIComponent(config.appID??"");
+export async function getTokenRefresh(refreshToken: string) {
+    let encodedID = encodeURIComponent(config.appID ?? "");
     let encodedUrl = encodeURIComponent(config.redirectURL);
 
     let url = 'https://login.live.com/oauth20_token.srf';
     let body = `client_id=${encodedID}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${encodedUrl}`;
 
-    if(config.mode === "Web"){
-        if(!config.appSecret){
+    if (config.mode === "Web") {
+        if (!config.appSecret) {
             throw new AuthenticationError("App secret was not provided", "App secret was not provided in getToken")
         }
 
@@ -239,9 +245,9 @@ export async function getTokenRefresh(refreshToken:string) {
         body = `client_id=${encodedID}&client_secret=${encodedSecret}&refresh_token=${refreshToken}&grant_type=refresh_token&redirect_uri=${encodedUrl}`
     }
 
-    let headers:any = {"Content-Type": "application/x-www-form-urlencoded"};
-    if(config.mode === "SPA"){
-        headers["Origin"]= config.redirectURL;
+    let headers: any = {"Content-Type": "application/x-www-form-urlencoded"};
+    if (config.mode === "SPA") {
+        headers["Origin"] = config.redirectURL;
     }
 
     const response = await HttpPost(url, body, headers);
@@ -258,7 +264,7 @@ export async function getTokenRefresh(refreshToken:string) {
     return jsonResponse;
 }
 
-export async function authXBL(accessToken:string) {
+export async function authXBL(accessToken: string) {
     const body = {
         Properties: {
             AuthMethod: 'RPS',
@@ -282,7 +288,7 @@ export async function authXBL(accessToken:string) {
     return jsonResponse;
 }
 
-export async function authXSTS(xblToken:string) {
+export async function authXSTS(xblToken: string) {
     const body = {
         Properties: {
             SandboxId: 'RETAIL',
@@ -313,7 +319,7 @@ export async function authXSTS(xblToken:string) {
     return jsonResponse;
 }
 
-export async function getMinecraftToken(xstsToken:string, uhs:string) {
+export async function getMinecraftToken(xstsToken: string, uhs: string) {
     const body = {
         identityToken: `XBL3.0 x=${uhs};${xstsToken}`,
     };
@@ -328,24 +334,24 @@ export async function getMinecraftToken(xstsToken:string, uhs:string) {
 
     const jsonResponse: MCTokenResponse = JSON.parse(response);
 
-    if(jsonResponse.errorMessage){
-        throw new AuthenticationError("Error when getting minecraft token",jsonResponse.errorMessage, jsonResponse.path)
+    if (jsonResponse.errorMessage) {
+        throw new AuthenticationError("Error when getting minecraft token", jsonResponse.errorMessage, jsonResponse.path)
     }
 
     return jsonResponse;
 }
 
-export async function authFlow(authCode:string, PKCEPair?:PKCEPairType) {
+export async function authFlow(authCode: string, PKCEPair?: PKCEPairType) {
     const tokenRes = await getToken(authCode, PKCEPair);
     return await authFlowXBL(tokenRes.access_token, tokenRes.refresh_token);
 }
 
-export async function authFlowRefresh(refresh_token:string) {
+export async function authFlowRefresh(refresh_token: string) {
     const tokenRes = await getTokenRefresh(refresh_token);
     return await authFlowXBL(tokenRes.access_token, tokenRes.refresh_token);
 }
 
-export async function authFlowXBL(token:string, refresh_token:string) {
+export async function authFlowXBL(token: string, refresh_token: string) {
     const xblRes = await authXBL(token);
     const xstsRes = await authXSTS(xblRes.Token);
     const mcToken = await getMinecraftToken(
